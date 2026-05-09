@@ -119,7 +119,11 @@ colunas = ['Mes', 'Ano', 'Dia_Semana', 'Bairro', 'Serviço']
 
 # Criando o DataFrame
 df_importancia = pd.DataFrame({'Variavel': colunas, 'Peso_Porcentagem': pesos * 100})
-df_importancia = df_importancia.sort_values(by='Peso_Porcentagem', ascending=True)
+df_importancia = df_importancia.sort_values(by='Peso_Porcentagem', ascending=False)
+
+# Paleta Okabe-Ito: criada especificamente para daltonismo
+# Cada barra recebe uma cor única e completamente distinta
+OKABE_ITO = ['#0072B2', '#E69F00', '#009E73', '#D55E00', '#CC79A7']
 
 # Gerando o Gráfico
 fig_importancia = px.bar(
@@ -133,8 +137,8 @@ fig_importancia = px.bar(
         'Variavel': 'Características (Features)'
     },
     template='plotly_white',
-    color='Peso_Porcentagem',
-    color_continuous_scale='Teal' 
+    color='Variavel',                          # Cor por categoria (cada barra = cor única)
+    color_discrete_sequence=OKABE_ITO          # Paleta Okabe-Ito segura para daltônicos
 )
 fig_importancia.update_traces(
     textposition='outside', 
@@ -145,6 +149,7 @@ fig_importancia.update_layout(
     xaxis_ticksuffix='%',
     margin=dict(r=80, l=20, t=50, b=20),
     height=400,  
-    width=900
+    width=900,
+    showlegend=False                           # Esconde a legenda (redundante com os rótulos do eixo Y)
 )
 fig_importancia.show()

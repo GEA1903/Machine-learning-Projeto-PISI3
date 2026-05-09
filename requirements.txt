@@ -1,4 +1,6 @@
 pandas
 plotly
+scikit-learn
+joblib
 requests
 jupyter

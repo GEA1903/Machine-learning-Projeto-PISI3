@@ -125,7 +125,11 @@ features = ['Mês', 'Dia da Semana', 'Bairro', 'Serviço']
 
 # Criando o DataFrame para o gráfico
 df_imp_ml1 = pd.DataFrame({'Atributo': features, 'Importância (%)': importancias * 100})
-df_imp_ml1 = df_imp_ml1.sort_values(by='Importância (%)', ascending=True)
+df_imp_ml1 = df_imp_ml1.sort_values(by='Importância (%)', ascending=False)
+
+# Paleta Okabe-Ito: criada especificamente para daltonismo
+# Cada barra recebe uma cor única e completamente distinta
+OKABE_ITO = ['#0072B2', '#E69F00', '#009E73', '#D55E00']
 
 fig_imp_ml1 = px.bar(
     df_imp_ml1, 
@@ -135,8 +139,8 @@ fig_imp_ml1 = px.bar(
     title='O que mais influencia a criação de um Gargalo?',
     labels={'Importância (%)': 'Peso na Decisão da IA (%)', 'Atributo': 'Variável'},
     template='plotly_white',
-    color='Importância (%)',
-    color_continuous_scale='Viridis'
+    color='Atributo',                         # Cor por categoria (cada barra = cor única)
+    color_discrete_sequence=OKABE_ITO         # Paleta Okabe-Ito segura para daltônicos
 )
 fig_imp_ml1.update_traces(
     textposition='outside', 
@@ -147,6 +151,7 @@ fig_imp_ml1.update_layout(
     xaxis_ticksuffix='%', 
     margin=dict(r=80, l=20, t=50, b=20),
     height=400,
-    width=900
+    width=900,
+    showlegend=False                           # Esconde a legenda (redundante com os rótulos do eixo Y)
 )
 fig_imp_ml1.show()
