@@ -1,5 +1,4 @@
 import pandas as pd
-import os
 import warnings
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
@@ -13,60 +12,22 @@ warnings.filterwarnings('ignore')
 print("Iniciando Pipeline KDD para o Projeto REPORT!...")
 
 # ==========================================
-# ETAPA 1: SELEÇÃO DE DADOS
+# ETAPA 1 + 2: CARREGAMENTO DO PARQUET
 # ==========================================
-print("[1/5] Etapa de Seleção...")
-pasta_dados = 'data/'
-arquivos_csv = [f for f in os.listdir(pasta_dados) if f.endswith('.csv')]
-dfs = []
-
-for arquivo in arquivos_csv:
-    caminho = os.path.join(pasta_dados, arquivo)
-    df_temp = pd.read_csv(caminho, sep=';', encoding='latin1', on_bad_lines='skip', low_memory=False)
-    dfs.append(df_temp)
-
-df_all = pd.concat(dfs, ignore_index=True)
-
-# Seleciona apenas as colunas que têm potencial preditivo para o nosso problema
-colunas_alvo = ['DATA_DEMANDA', 'BAIRRO', 'GRUPOSERVICO_DESCRICAO', 'SITUACAO']
-df_kdd = df_all[colunas_alvo].copy()
+# O Parquet já contém os dados limpos e pré-processados.
+# Rodamos o preprocessamento.py uma única vez para gerar esse arquivo;
+# agora apenas o lemos — muito mais rápido que reprocessar os CSVs.
+print("[1/3] Carregando dados pré-processados (Parquet)...")
+df_kdd = pd.read_parquet('data/df_ml1.parquet', engine='pyarrow')
+print(f"  -> {len(df_kdd):,} registros carregados com sucesso.")
 
 # ==========================================
-# ETAPA 2: PRÉ-PROCESSAMENTO E LIMPEZA
+# ETAPA 3: TRANSFORMAÇÃO (Encoding)
 # ==========================================
-print("[2/5] Etapa de Pré-processamento...")
-# Remoção de Nulos Críticos
-df_kdd['DATA_DEMANDA'] = pd.to_datetime(df_kdd['DATA_DEMANDA'], format='mixed', errors='coerce')
-df_kdd.dropna(subset=['DATA_DEMANDA', 'BAIRRO', 'GRUPOSERVICO_DESCRICAO', 'SITUACAO'], inplace=True)
-
-# Padronização de Texto e Remoção de Ruídos (Regex)
-df_kdd['SITUACAO'] = df_kdd['SITUACAO'].astype(str).str.strip().str.upper()
-df_kdd['SITUACAO'] = df_kdd['SITUACAO'].str.replace(r'.*EXECU.*', 'EXECUCAO', regex=True)
-df_kdd['SITUACAO'] = df_kdd['SITUACAO'].str.replace(r'.*FISCALIZA.*', 'FISCALIZACAO', regex=True)
-df_kdd['SITUACAO'] = df_kdd['SITUACAO'].str.replace(r'.*PREPARA.*', 'PREPARACAO', regex=True)
-df_kdd['SITUACAO'] = df_kdd['SITUACAO'].str.replace(r'.*PENDEN.*', 'PENDENTE', regex=True)
-
-df_kdd['GRUPOSERVICO_DESCRICAO'] = df_kdd['GRUPOSERVICO_DESCRICAO'].astype(str).str.strip().str.upper()
-df_kdd['GRUPOSERVICO_DESCRICAO'] = df_kdd['GRUPOSERVICO_DESCRICAO'].str.replace(r'.*ARBORIZA.*', 'ARBORIZACAO', regex=True)
-df_kdd['GRUPOSERVICO_DESCRICAO'] = df_kdd['GRUPOSERVICO_DESCRICAO'].str.replace(r'.*PAVIMENTA.*', 'PAVIMENTACAO', regex=True)
-df_kdd['GRUPOSERVICO_DESCRICAO'] = df_kdd['GRUPOSERVICO_DESCRICAO'].str.replace(r'.*ILUMINA.*', 'ILUMINACAO PUBLICA', regex=True)
-
-df_kdd['BAIRRO'] = df_kdd['BAIRRO'].astype(str).str.strip().str.upper()
-
-# ==========================================
-# ETAPA 3: TRANSFORMAÇÃO (Feature Engineering)
-# ==========================================
-print("[3/5] Etapa de Transformação...")
-# Extração de Features Temporais (O tempo importa muito para a previsão)
-df_kdd['Mes'] = df_kdd['DATA_DEMANDA'].dt.month
-df_kdd['Dia_Semana_Num'] = df_kdd['DATA_DEMANDA'].dt.dayofweek # Retorna 0 (Seg) a 6 (Dom)
-
-# Simplificando a Variável Alvo
-# Ensinar a IA a prever se um chamado vai dar problema (1) ou se flui bem (0)
-status_gargalo = ['PENDENTE', 'PREPARACAO', 'CADASTRADA']
-df_kdd['Alvo_Gargalo'] = df_kdd['SITUACAO'].apply(lambda x: 1 if x in status_gargalo else 0)
-
-# Encoding (Traduzindo Bairro e Serviço para Matemática)
+# O LabelEncoder converte texto em números (ex: 'BOA VIAGEM' → 42).
+# Ele precisa ser ajustado (fit) aqui, nos mesmos dados do treino,
+# e salvo com joblib para que o app use a mesma "tabela de tradução".
+print("[2/3] Etapa de Transformação (Encoding)...")
 encoder_bairro = LabelEncoder()
 encoder_servico = LabelEncoder()
 
@@ -77,7 +38,7 @@ print("Dados transformados com sucesso! Prontos para a Mineração (Data Mining)
 # ==========================================
 # ETAPA 4: DATA MINING (Mineração de Dados)
 # ==========================================
-print("[4/5] Etapa de Data Mining (Treinando a IA)...")
+print("[3/3] Etapa de Data Mining e Avaliação (Treinando a IA)...")
 # Definir as "Pistas" (X) e a "Resposta" (y)
 X = df_kdd[['Mes', 'Dia_Semana_Num', 'Bairro_ID', 'Servico_ID']]
 y = df_kdd['Alvo_Gargalo']
