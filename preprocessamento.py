@@ -20,6 +20,21 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # ==========================================
+# FUNÇÕES AUXILIARES
+# ==========================================
+def padronizar_texto(serie: pd.Series) -> pd.Series:
+    """
+    Padroniza uma coluna de texto: remove espaços extras, converte
+    para maiúsculas e normaliza as categorias de serviço mais comuns.
+    Centraliza a lógica que antes estava duplicada para df_ml1 e df_ml2.
+    """
+    serie = serie.astype(str).str.strip().str.upper()
+    serie = serie.str.replace(r'.*ARBORIZA.*',  'ARBORIZACAO',       regex=True)
+    serie = serie.str.replace(r'.*PAVIMENTA.*', 'PAVIMENTACAO',      regex=True)
+    serie = serie.str.replace(r'.*ILUMINA.*',   'ILUMINACAO PUBLICA', regex=True)
+    return serie
+
+# ==========================================
 # ETAPA 1: SELEÇÃO — lendo os CSVs brutos
 # ==========================================
 # Por que isso é lento? Porque CSV é texto puro:
@@ -65,11 +80,8 @@ df_ml1['SITUACAO'] = df_ml1['SITUACAO'].str.replace(r'.*FISCALIZA.*','FISCALIZAC
 df_ml1['SITUACAO'] = df_ml1['SITUACAO'].str.replace(r'.*PREPARA.*',  'PREPARACAO',   regex=True)
 df_ml1['SITUACAO'] = df_ml1['SITUACAO'].str.replace(r'.*PENDEN.*',   'PENDENTE',     regex=True)
 
-df_ml1['GRUPOSERVICO_DESCRICAO'] = df_ml1['GRUPOSERVICO_DESCRICAO'].astype(str).str.strip().str.upper()
-df_ml1['GRUPOSERVICO_DESCRICAO'] = df_ml1['GRUPOSERVICO_DESCRICAO'].str.replace(r'.*ARBORIZA.*',  'ARBORIZACAO',     regex=True)
-df_ml1['GRUPOSERVICO_DESCRICAO'] = df_ml1['GRUPOSERVICO_DESCRICAO'].str.replace(r'.*PAVIMENTA.*', 'PAVIMENTACAO',    regex=True)
-df_ml1['GRUPOSERVICO_DESCRICAO'] = df_ml1['GRUPOSERVICO_DESCRICAO'].str.replace(r'.*ILUMINA.*',   'ILUMINACAO PUBLICA', regex=True)
-
+# Reutilizando a função auxiliar — evita duplicação de lógica com o df_ml2
+df_ml1['GRUPOSERVICO_DESCRICAO'] = padronizar_texto(df_ml1['GRUPOSERVICO_DESCRICAO'])
 df_ml1['BAIRRO'] = df_ml1['BAIRRO'].astype(str).str.strip().str.upper()
 
 # Feature Engineering (fazemos aqui para não repetir em cada run do ML1)
@@ -102,13 +114,10 @@ df_ml2['DATA_DEMANDA']       = pd.to_datetime(df_ml2['DATA_DEMANDA'],       form
 df_ml2['DATA_ULT_SITUACAO']  = pd.to_datetime(df_ml2['DATA_ULT_SITUACAO'], format='mixed', errors='coerce')
 df_ml2.dropna(subset=['DATA_DEMANDA', 'DATA_ULT_SITUACAO', 'BAIRRO', 'GRUPOSERVICO_DESCRICAO'], inplace=True)
 
-# Padronização de texto
-df_ml2['SITUACAO']               = df_ml2['SITUACAO'].astype(str).str.strip().str.upper()
-df_ml2['BAIRRO']                 = df_ml2['BAIRRO'].astype(str).str.strip().str.upper()
-df_ml2['GRUPOSERVICO_DESCRICAO'] = df_ml2['GRUPOSERVICO_DESCRICAO'].astype(str).str.strip().str.upper()
-df_ml2['GRUPOSERVICO_DESCRICAO'] = df_ml2['GRUPOSERVICO_DESCRICAO'].str.replace(r'.*ARBORIZA.*',  'ARBORIZACAO',     regex=True)
-df_ml2['GRUPOSERVICO_DESCRICAO'] = df_ml2['GRUPOSERVICO_DESCRICAO'].str.replace(r'.*PAVIMENTA.*', 'PAVIMENTACAO',    regex=True)
-df_ml2['GRUPOSERVICO_DESCRICAO'] = df_ml2['GRUPOSERVICO_DESCRICAO'].str.replace(r'.*ILUMINA.*',   'ILUMINACAO PUBLICA', regex=True)
+# Padronização de texto — reutilizando a função auxiliar
+df_ml2['SITUACAO'] = df_ml2['SITUACAO'].astype(str).str.strip().str.upper()
+df_ml2['BAIRRO']   = df_ml2['BAIRRO'].astype(str).str.strip().str.upper()
+df_ml2['GRUPOSERVICO_DESCRICAO'] = padronizar_texto(df_ml2['GRUPOSERVICO_DESCRICAO'])
 
 # Apenas chamados concluídos (para aprender quanto tempo uma conclusão leva)
 df_ml2 = df_ml2[df_ml2['SITUACAO'] == 'ATENDIDA']
