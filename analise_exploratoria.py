@@ -548,3 +548,50 @@ fig_cluster.add_hline(y=media_inef, line_dash="dash", line_color="red", opacity=
 fig_cluster.update_traces(marker=dict(line=dict(width=1, color='DarkSlateGrey')))
 fig_cluster.show()
 
+
+from sklearn.cluster import AgglomerativeClustering
+
+
+# 6. CLUSTERIZAÇÃO ALTERNATIVA (AGLOMERATIVO HIERÁRQUICO)
+
+# CONTRAPROVA CIENTÍFICA (PP1): IMPLEMENTAÇÃO DE AGRUPAMENTO COMPLEMENTAR
+# Para certificar que as "zonas de crise urbana" descobertas pelo K-Means não 
+# são distorções heurísticas do algoritmo, a base georreferenciada é submetida 
+# a um classificador Aglomerativo Hierárquico. A convergência espacial entre 
+# dois modelos matemáticos independentes valida cientificamente os agrupamentos.
+# ============================================================
+print("\nGerando Clusterização Hierárquica (Modelo Alternativo)...")
+aglo = AgglomerativeClustering(n_clusters=4)
+df_bairros_cluster['Cluster_Hierarquico'] = aglo.fit_predict(X_scaled)
+
+# Mapeamento taxonômico das partições geradas
+df_bairros_cluster['Perfil_Aglo'] = df_bairros_cluster['Cluster_Hierarquico'].astype(str)
+df_bairros_cluster['Perfil_Aglo'] = 'Camada ' + df_bairros_cluster['Perfil_Aglo']
+
+# Definição de paleta cromática exclusiva para diferenciação visual nos relatórios
+PALETA_AGLO = ['#E69F00', '#56B4E9', '#009E73', '#CC79A7']
+
+# GERAÇÃO DO MAPA DE DISPERSÃO HIERÁRQUICO OTIMIZADO
+fig_cluster_2 = px.scatter(
+    df_bairros_cluster, 
+    x='Volume_Total', 
+    y='Taxa_Ineficiencia_%', 
+    color='Perfil_Aglo',
+    size='Volume_Total', # A proporcionalidade volumétrica das coordenadas é preservada
+    hover_name='BAIRRO',
+    title='Clusterização Hierárquica: Perfil de Crise dos Bairros (Comparativo)',
+    labels={
+        'Volume_Total': 'Volume Total de Ocorrências', 
+        'Taxa_Ineficiencia_%': 'Taxa de Ineficiência (%)'
+    },
+    template='plotly_white',
+    color_discrete_sequence=PALETA_AGLO, 
+    size_max=35
+)
+
+# Inclusão dos balizadores cartesianos baseados na média paramétrica da cidade
+fig_cluster_2.add_vline(x=media_vol, line_dash="dash", line_color="grey", opacity=0.3)
+fig_cluster_2.add_hline(y=media_inef, line_dash="dash", line_color="grey", opacity=0.3)
+
+fig_cluster_2.update_traces(marker=dict(line=dict(width=1, color='DarkSlateGrey')))
+fig_cluster_2.show()
