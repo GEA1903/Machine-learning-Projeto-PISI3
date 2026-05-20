@@ -1,25 +1,22 @@
 import pandas as pd
 import warnings
+import numpy as np
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-# Algoritmos concorrentes importados para viabilizar a análise comparativa de performance
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score, classification_report, f1_score
 import joblib
 import plotly.express as px
 
-# Ignorar avisos irrelevantes do pandas para assegurar a clareza dos logs no terminal
+# Ignorar avisos irrelevantes do pandas
 warnings.filterwarnings('ignore')
 print("Iniciando Pipeline KDD para o Projeto REPORT!...")
 
 # ==========================================
 # ETAPA 1 + 2: CARREGAMENTO DO PARQUET
 # ==========================================
-# O Parquet já contém os dados limpos e pré-processados.
-# Rodamos o preprocessamento.py uma única vez para gerar esse arquivo;
-# agora apenas o lemos — muito mais rápido que reprocessar os CSVs.
 print("[1/3] Carregando dados pré-processados (Parquet)...")
 df_kdd = pd.read_parquet('data/df_ml1.parquet', engine='pyarrow')
 print(f"  -> {len(df_kdd):,} registros carregados com sucesso.")
@@ -27,9 +24,6 @@ print(f"  -> {len(df_kdd):,} registros carregados com sucesso.")
 # ==========================================
 # ETAPA 3: TRANSFORMAÇÃO (Encoding)
 # ==========================================
-# O LabelEncoder converte texto em números (ex: 'BOA VIAGEM' → 42).
-# Ele precisa ser ajustado (fit) aqui, nos mesmos dados do treino,
-# e salvo com joblib para que o app use a mesma "tabela de tradução".
 print("[2/3] Etapa de Transformação (Encoding)...")
 encoder_bairro = LabelEncoder()
 encoder_servico = LabelEncoder()
@@ -39,24 +33,15 @@ df_kdd['Servico_ID'] = encoder_servico.fit_transform(df_kdd['GRUPOSERVICO_DESCRI
 print("Dados transformados com sucesso! Prontos para a Mineração (Data Mining).")
 
 # ==========================================
-# ETAPA 4: DATA MINING (Mineração de Dados e Análise Comparativa)
+# ETAPA 4: DATA MINING E AVALIAÇÃO DETALHADA DE TODOS
 # ==========================================
 print("[3/3] Etapa de Data Mining e Avaliação (Treinando as IAs)...")
-# Definir as "Pistas" (X) e a "Resposta" (y)
 X = df_kdd[['Mes', 'Dia_Semana_Num', 'Bairro_ID', 'Servico_ID']]
 y = df_kdd['Alvo_Gargalo']
 
-# Divisão de Treino e Teste (80% treino, 20% teste)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-print(f" -> Ensinando as IAs com {len(X_train)} registros...")
+print(f" -> Ensinando as IAs com {len(X_train)} registros...\n")
 
-# ============================================================================
-# DIRETRIZ CIENTÍFICA (PP2): COMPETIÇÃO MULTIALGORÍTMICA DE CLASSIFICAÇÃO
-# Para mitigar vieses de seleção e conferir robustez metodológica à triagem de
-# urgências, estabeleceu-se um ambiente competitivo entre três famílias distintas
-# de classificadores. A avaliação final pauta-se no F1-Score Ponderado, métrica 
-# estatística ideal para conjuntos de dados que apresentam desbalanceamento natural.
-# ============================================================================
 modelos = {
     'Random Forest': RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1),
     'Árvore de Decisão': DecisionTreeClassifier(random_state=42),
@@ -66,7 +51,7 @@ modelos = {
 resultados = []
 modelos_treinados = {}
 
-# Iteração automatizada para treinamento, predição e extração de métricas de generalização
+# Iteração automatizada para treinamento e extração de métricas de TODOS os algoritmos
 for nome, modelo in modelos.items():
     modelo.fit(X_train, y_train)
     modelos_treinados[nome] = modelo 
@@ -74,6 +59,7 @@ for nome, modelo in modelos.items():
     y_pred_train = modelo.predict(X_train)
     y_pred_test = modelo.predict(X_test)
     
+    # Coleta de métricas simples para o Ranking
     acc_train = accuracy_score(y_train, y_pred_train)
     acc_test = accuracy_score(y_test, y_pred_test)
     f1_test = f1_score(y_test, y_pred_test, average='weighted')
@@ -84,86 +70,91 @@ for nome, modelo in modelos.items():
         'Acurácia (Teste)': round(acc_test * 100, 2),
         'F1-Score (Teste)': round(f1_test * 100, 2)
     })
-
-# Consolidação da matriz de desempenho para fins de auditoria e inserção no artigo científico
-df_comparacao = pd.DataFrame(resultados).sort_values(by='F1-Score (Teste)', ascending=False)
-print("\n=== TABELA DE COMPARAÇÃO DE ALGORITMOS ===")
-print(df_comparacao.to_markdown(index=False))
-
-# Seleção programática do modelo ótimo para exportação e integração com o backend
-vencedor_nome = df_comparacao.iloc[0]['Algoritmo']
-modelo_vencedor = modelos_treinados[vencedor_nome]
-print(f"\n🏆 O modelo escolhido foi: {vencedor_nome} (Melhor F1-Score)")
+    
+    # =======================================================
+    # NOVIDADE: Imprimir Matriz Treino/Teste para CADA modelo
+    # =======================================================
+    print("=" * 60)
+    print(f"AVALIAÇÃO DETALHADA: {nome.upper()}")
+    print("=" * 60)
+    print(f"\n[DESEMPENHO NO TREINO - 80%]")
+    print(f"Acurácia: {acc_train * 100:.2f}%")
+    print(classification_report(y_train, y_pred_train, target_names=['Fluxo Normal (0)', 'Gargalo/Atraso (1)']))
+    
+    print(f"\n[DESEMPENHO NO TESTE - 20%]")
+    print(f"Acurácia: {acc_test * 100:.2f}%")
+    print(classification_report(y_test, y_pred_test, target_names=['Fluxo Normal (0)', 'Gargalo/Atraso (1)']))
+    print("\n")
 
 # ==========================================
-# ETAPA 5: AVALIAÇÃO E INTERPRETAÇÃO DO VENCEDOR
+# ETAPA 5: SELEÇÃO E EXPORTAÇÃO DO VENCEDOR
 # ==========================================
-print("\n[5/5] Etapa de Avaliação Detalhada do Modelo Vencedor...")
+'''modelo_vencedor = modelos_treinados['Random Forest']
+vencedor_nome = 'Random Forest'
 
-# Prova do Treino 
-y_pred_train_vencedor = modelo_vencedor.predict(X_train)
-print("\n=== DESEMPENHO NOS DADOS DE TREINO (80%) ===")
-print(f"Acurácia: {accuracy_score(y_train, y_pred_train_vencedor) * 100:.2f}%")
-print(classification_report(y_train, y_pred_train_vencedor, target_names=['Fluxo Normal (0)', 'Gargalo/Atraso (1)']))
-
-# Prova Final 
-y_pred_test_vencedor = modelo_vencedor.predict(X_test)
-print("\n=== DESEMPENHO NOS DADOS DE TESTE (20%) - MUNDO REAL ===")
-print(f"Acurácia: {accuracy_score(y_test, y_pred_test_vencedor) * 100:.2f}%")
-print(classification_report(y_test, y_pred_test_vencedor, target_names=['Fluxo Normal (0)', 'Gargalo/Atraso (1)']))
-
-# 3. Empacotando o "Cérebro" para uso no aplicativo REPORT!
 print("\nSalvando o modelo e os tradutores para o backend do App...")
-# O joblib salva a IA treinada em um arquivo físico no computador
 joblib.dump(modelo_vencedor, 'modelo_report_rf.pkl')
 joblib.dump(encoder_bairro, 'encoder_bairro.pkl')
 joblib.dump(encoder_servico, 'encoder_servico.pkl')
-print("SUCESSO! Ciclo KDD concluído. O motor preditivo está pronto para produção.")
+print("SUCESSO! Ciclo KDD concluído.\n")'''
 
 # ==========================================
-# FEATURE IMPORTANCE
+# FEATURE IMPORTANCE (Vencedor)
 # ==========================================
-print("\nAnalisando o que causa os gargalos no Recife...")
 
-# Contingência arquitetural: classificadores baseados em distância ou regressões lineares puras 
-# não possuem o atributo 'feature_importances_'. Caso o vencedor mude, isola-se o Random Forest 
-# para garantir a geração contínua do gráfico de importância relativa.
-if hasattr(modelo_vencedor, 'feature_importances_'):
-    importancias = modelo_vencedor.feature_importances_
-else:
-    importancias = modelos_treinados['Random Forest'].feature_importances_
-
+importancias_modelos = {}
 features = ['Mês', 'Dia da Semana', 'Bairro', 'Serviço']
 
-# Criando o DataFrame para o gráfico
-df_imp_ml1 = pd.DataFrame({'Atributo': features, 'Importância (%)': importancias * 100})
-df_imp_ml1 = df_imp_ml1.sort_values(by='Importância (%)', ascending=False)
+for nome, modelo in modelos.items():
+    print(f" -> Treinando e extraindo coeficientes: {nome}...")
+    modelo.fit(X_train, y_train)
+    
+    # Extração de pesos dependendo da natureza do modelo científico
+    if hasattr(modelo, 'feature_importances_'):
+        pesos = modelo.feature_importances_ * 100
+    elif hasattr(modelo, 'coef_'):
+        # Regressão Logística: Magnitude absoluta dos coeficientes normalizada para %
+        coef_absolutos = np.abs(modelo.coef_[0])
+        pesos = (coef_absolutos / np.sum(coef_absolutos)) * 100
+    else:
+        pesos = np.zeros(len(features))
+        
+    df_imp = pd.DataFrame({'Atributo': features, 'Importância (%)': pesos})
+    importancias_modelos[nome] = df_imp.sort_values(by='Importância (%)', ascending=False)
 
-# Paleta Okabe-Ito: criada especificamente para daltonismo
-# Cada barra recebe uma cor única e completamente distinta
+# ==========================================
+# ETAPA 5: GERAÇÃO DOS GRÁFICOS DE FEATURE IMPORTANCE (DOS 3)
+# ==========================================
+print("\n[5/5] Exibindo Gráficos de Importância de Variáveis...")
+
+# Paleta Okabe-Ito acessível
 OKABE_ITO = ['#0072B2', '#E69F00', '#009E73', '#D55E00']
 
-fig_imp_ml1 = px.bar(
-    df_imp_ml1, 
-    x='Importância (%)', 
-    y='Atributo', 
-    orientation='h',
-    title='O que mais influencia a criação de um Gargalo?',
-    labels={'Importância (%)': 'Peso na Decisão da IA (%)', 'Atributo': 'Variável'},
-    template='plotly_white',
-    color='Atributo',                         # Cor por categoria (cada barra = cor única)
-    color_discrete_sequence=OKABE_ITO         # Paleta Okabe-Ito segura para daltônicos
-)
-fig_imp_ml1.update_traces(
-    textposition='outside', 
-    texttemplate='<b>%{x:.1f}%</b>', 
-    textfont_size=15
-)
-fig_imp_ml1.update_layout(
-    xaxis_ticksuffix='%', 
-    margin=dict(r=80, l=20, t=50, b=20),
-    height=400,
-    width=900,
-    showlegend=False                           # Esconde a legenda (redundante com os rótulos do eixo Y)
-)
-fig_imp_ml1.show()
+for nome, df_imp in importancias_modelos.items():
+    fig = px.bar(
+        df_imp, 
+        x='Importância (%)', 
+        y='Atributo', 
+        orientation='h',
+        title=f'Análise de Atributos (Caixa Preta): {nome}',
+        labels={'Importância (%)': 'Peso/Grau de Influência (%)', 'Atributo': 'Variável'},
+        template='plotly_white',
+        color='Atributo',
+        color_discrete_sequence=OKABE_ITO
+    )
+    fig.update_traces(
+        textposition='outside', 
+        texttemplate='<b>%{x:.1f}%</b>', 
+        textfont_size=13
+    )
+    fig.update_layout(
+        xaxis_ticksuffix='%', 
+        margin=dict(r=80, l=20, t=50, b=20),
+        height=380,
+        width=850,
+        showlegend=False
+    )
+    # Abre o gráfico interativo no navegador
+    fig.show()
+
+print("\nCiclo concluído. Os 3 gráficos de influência foram gerados.")
