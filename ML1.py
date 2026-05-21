@@ -1,14 +1,14 @@
 import pandas as pd
 import warnings
-import numpy as np
+import matplotlib.pyplot as plt
+import shap
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.metrics import accuracy_score, classification_report, f1_score
+from sklearn.metrics import accuracy_score, classification_report
 import joblib
-import plotly.express as px
 
 # Ignorar avisos irrelevantes do pandas
 warnings.filterwarnings('ignore')
@@ -30,13 +30,16 @@ encoder_servico = LabelEncoder()
 
 df_kdd['Bairro_ID'] = encoder_bairro.fit_transform(df_kdd['BAIRRO'])
 df_kdd['Servico_ID'] = encoder_servico.fit_transform(df_kdd['GRUPOSERVICO_DESCRICAO'])
-print("Dados transformados com sucesso! Prontos para a Mineração (Data Mining).")
 
 # ==========================================
-# ETAPA 4: DATA MINING E AVALIAÇÃO DETALHADA DE TODOS
+# ETAPA 4: DATA MINING E AVALIAÇÃO DETALHADA
 # ==========================================
-print("[3/3] Etapa de Data Mining e Avaliação (Treinando as IAs)...")
-X = df_kdd[['Mes', 'Dia_Semana_Num', 'Bairro_ID', 'Servico_ID']]
+print("[3/3] Etapa de Data Mining (Treinando as IAs)...")
+
+# Renomeando as colunas para que o SHAP as leia com a formatação bonita nos gráficos
+X = df_kdd[['Mes', 'Dia_Semana_Num', 'Bairro_ID', 'Servico_ID']].rename(
+    columns={'Dia_Semana_Num': 'Dia da Semana', 'Bairro_ID': 'Bairro', 'Servico_ID': 'Serviço'}
+)
 y = df_kdd['Alvo_Gargalo']
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
@@ -48,10 +51,8 @@ modelos = {
     'Regressão Logística': LogisticRegression(random_state=42, max_iter=500)
 }
 
-resultados = []
 modelos_treinados = {}
 
-# Iteração automatizada para treinamento e extração de métricas de TODOS os algoritmos
 for nome, modelo in modelos.items():
     modelo.fit(X_train, y_train)
     modelos_treinados[nome] = modelo 
@@ -59,102 +60,76 @@ for nome, modelo in modelos.items():
     y_pred_train = modelo.predict(X_train)
     y_pred_test = modelo.predict(X_test)
     
-    # Coleta de métricas simples para o Ranking
     acc_train = accuracy_score(y_train, y_pred_train)
     acc_test = accuracy_score(y_test, y_pred_test)
-    f1_test = f1_score(y_test, y_pred_test, average='weighted')
     
-    resultados.append({
-        'Algoritmo': nome,
-        'Acurácia (Treino)': round(acc_train * 100, 2),
-        'Acurácia (Teste)': round(acc_test * 100, 2),
-        'F1-Score (Teste)': round(f1_test * 100, 2)
-    })
-    
-    # =======================================================
-    # NOVIDADE: Imprimir Matriz Treino/Teste para CADA modelo
-    # =======================================================
     print("=" * 60)
     print(f"AVALIAÇÃO DETALHADA: {nome.upper()}")
     print("=" * 60)
     print(f"\n[DESEMPENHO NO TREINO - 80%]")
     print(f"Acurácia: {acc_train * 100:.2f}%")
-    print(classification_report(y_train, y_pred_train, target_names=['Fluxo Normal (0)', 'Gargalo/Atraso (1)']))
+    print(classification_report(y_train, y_pred_train, target_names=['Fluxo Normal (0)', 'Gargalo (1)']))
     
     print(f"\n[DESEMPENHO NO TESTE - 20%]")
     print(f"Acurácia: {acc_test * 100:.2f}%")
-    print(classification_report(y_test, y_pred_test, target_names=['Fluxo Normal (0)', 'Gargalo/Atraso (1)']))
+    print(classification_report(y_test, y_pred_test, target_names=['Fluxo Normal (0)', 'Gargalo (1)']))
     print("\n")
 
 # ==========================================
-# ETAPA 5: SELEÇÃO E EXPORTAÇÃO DO VENCEDOR
+# ETAPA 5: EXPORTAÇÃO DO RANDOM FOREST PARA PRODUÇÃO
 # ==========================================
-'''modelo_vencedor = modelos_treinados['Random Forest']
-vencedor_nome = 'Random Forest'
-
-print("\nSalvando o modelo e os tradutores para o backend do App...")
-joblib.dump(modelo_vencedor, 'modelo_report_rf.pkl')
+print("Salvando o Random Forest e os tradutores para o backend do App...")
+modelo_rf = modelos_treinados['Random Forest']
+joblib.dump(modelo_rf, 'modelo_report_rf.pkl')
 joblib.dump(encoder_bairro, 'encoder_bairro.pkl')
 joblib.dump(encoder_servico, 'encoder_servico.pkl')
-print("SUCESSO! Ciclo KDD concluído.\n")'''
 
 # ==========================================
-# FEATURE IMPORTANCE (Vencedor)
+# ETAPA 6: EXPLICABILIDADE CIENTÍFICA COM SHAP (OS 3 ALGORITMOS)
 # ==========================================
+print("\n[Iniciando exportação dos gráficos SHAP para o Dashboard...]")
+import os
 
-importancias_modelos = {}
-features = ['Mês', 'Dia da Semana', 'Bairro', 'Serviço']
+os.makedirs('dashboard/assets', exist_ok=True)
 
-for nome, modelo in modelos.items():
-    print(f" -> Treinando e extraindo coeficientes: {nome}...")
-    modelo.fit(X_train, y_train)
+X_shap = X_test.sample(n=250, random_state=42)
+X_bg = X_train.sample(n=100, random_state=42) 
+
+for nome, modelo in modelos_treinados.items():
+    print(f" -> Processando SHAP e exportando imagens para: {nome}...")
     
-    # Extração de pesos dependendo da natureza do modelo científico
-    if hasattr(modelo, 'feature_importances_'):
-        pesos = modelo.feature_importances_ * 100
-    elif hasattr(modelo, 'coef_'):
-        # Regressão Logística: Magnitude absoluta dos coeficientes normalizada para %
-        coef_absolutos = np.abs(modelo.coef_[0])
-        pesos = (coef_absolutos / np.sum(coef_absolutos)) * 100
-    else:
-        pesos = np.zeros(len(features))
-        
-    df_imp = pd.DataFrame({'Atributo': features, 'Importância (%)': pesos})
-    importancias_modelos[nome] = df_imp.sort_values(by='Importância (%)', ascending=False)
+    if isinstance(modelo, (RandomForestClassifier, DecisionTreeClassifier)):
+        explainer = shap.TreeExplainer(modelo)
+        shap_values_raw = explainer(X_shap)
+        if len(shap_values_raw.shape) == 3:
+            shap_values = shap_values_raw[:, :, 1]
+        else:
+            shap_values = shap_values_raw
+            
+    elif isinstance(modelo, LogisticRegression):
+        masker = shap.maskers.Independent(data=X_bg)
+        explainer = shap.LinearExplainer(modelo, masker)
+        shap_values = explainer(X_shap)
 
-# ==========================================
-# ETAPA 5: GERAÇÃO DOS GRÁFICOS DE FEATURE IMPORTANCE (DOS 3)
-# ==========================================
-print("\n[5/5] Exibindo Gráficos de Importância de Variáveis...")
+    # 2. Remove acentos e espaços para evitar bugs nos URLs de imagens
+    nome_slug = nome.lower().replace(" ", "_").replace("á", "a").replace("ã", "a").replace("í", "i").replace("ó", "o")
 
-# Paleta Okabe-Ito acessível
-OKABE_ITO = ['#0072B2', '#E69F00', '#009E73', '#D55E00']
+    # Gráfico SHAP de Barras
+    plt.figure(figsize=(7, 4))
+    shap.plots.bar(shap_values, show=False)
+    plt.title(f"SHAP Importância de Atributos: {nome}", fontsize=12, pad=15)
+    plt.tight_layout()
+    # Salva diretamente na subpasta do dashboard
+    plt.savefig(f'dashboard/assets/shap_{nome_slug}_bar.png', dpi=150)
+    plt.close() 
 
-for nome, df_imp in importancias_modelos.items():
-    fig = px.bar(
-        df_imp, 
-        x='Importância (%)', 
-        y='Atributo', 
-        orientation='h',
-        title=f'Análise de Atributos (Caixa Preta): {nome}',
-        labels={'Importância (%)': 'Peso/Grau de Influência (%)', 'Atributo': 'Variável'},
-        template='plotly_white',
-        color='Atributo',
-        color_discrete_sequence=OKABE_ITO
-    )
-    fig.update_traces(
-        textposition='outside', 
-        texttemplate='<b>%{x:.1f}%</b>', 
-        textfont_size=13
-    )
-    fig.update_layout(
-        xaxis_ticksuffix='%', 
-        margin=dict(r=80, l=20, t=50, b=20),
-        height=380,
-        width=850,
-        showlegend=False
-    )
-    # Abre o gráfico interativo no navegador
-    fig.show()
+    # Gráfico SHAP Enxame de Abelhas
+    plt.figure(figsize=(7, 4))
+    shap.plots.beeswarm(shap_values, show=False)
+    plt.title(f"SHAP Enxame de Abelhas (Impacto): {nome}", fontsize=12, pad=15)
+    plt.tight_layout()
+    # Salva diretamente na subpasta do dashboard
+    plt.savefig(f'dashboard/assets/shap_{nome_slug}_beeswarm.png', dpi=150)
+    plt.close()
 
-print("\nCiclo concluído. Os 3 gráficos de influência foram gerados.")
+print("\nSUCESSO! Todos os gráficos SHAP foram consolidados na pasta 'dashboard/assets'.")

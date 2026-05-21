@@ -1,16 +1,14 @@
 import dash_bootstrap_components as dbc
-from dash import html, dcc, dash_table
+from dash import html, dash_table
 import pandas as pd
-import plotly.express as px
 
-# Função auxiliar para manter a padronização e evitar redundância
 def gerar_tabela_terminal(df):
     return dash_table.DataTable(
         data=df.to_dict('records'),
         columns=[{"name": i, "id": i} for i in df.columns],
         style_cell={
-            'textAlign': 'center', 'padding': '12px', 
-            'fontFamily': 'monospace', 'fontSize': '14px'
+            'textAlign': 'center', 'padding': '10px', 
+            'fontFamily': 'monospace', 'fontSize': '13px'
         },
         style_header={
             'backgroundColor': '#1E293B', 'color': 'white', 
@@ -20,7 +18,7 @@ def gerar_tabela_terminal(df):
             {
                 'if': {'column_id': 'Classe / Métrica'},
                 'fontWeight': 'bold', 'textAlign': 'left',
-                'paddingLeft': '20px', 'fontFamily': 'sans-serif'
+                'paddingLeft': '15px', 'fontFamily': 'sans-serif'
             },
             {
                 'if': {'row_index': 2}, 
@@ -31,9 +29,7 @@ def gerar_tabela_terminal(df):
     )
 
 def render_rf():
-    # ==========================================
-    # 1. DADOS DO RANDOM FOREST (O VENCEDOR)
-    # ==========================================
+    # --- DADOS DO RANDOM FOREST ---
     df_treino_rf = pd.DataFrame({
         'Classe / Métrica': ['Fluxo Normal (0)', 'Gargalo/Atraso (1)', 'accuracy', 'macro avg', 'weighted avg'],
         'precision': ['0.95', '0.83', '', '0.89', '0.92'],
@@ -41,7 +37,6 @@ def render_rf():
         'f1-score': ['0.95', '0.82', '0.92', '0.89', '0.92'],
         'support': ['356981', '101279', '458260', '458260', '458260']
     })
-
     df_teste_rf = pd.DataFrame({
         'Classe / Métrica': ['Fluxo Normal (0)', 'Gargalo/Atraso (1)', 'accuracy', 'macro avg', 'weighted avg'],
         'precision': ['0.93', '0.76', '', '0.85', '0.89'],
@@ -50,27 +45,7 @@ def render_rf():
         'support': ['89353', '25213', '114566', '114566', '114566']
     })
 
-    df_imp_rf = pd.DataFrame({
-        'Variável': ['Serviço', 'Bairro', 'Mês', 'Dia da Semana'],
-        'Peso/Grau de Influência (%)': [76.1, 15.1, 4.5, 4.3]
-    })
-
-    fig_rf = px.bar(
-        df_imp_rf, x='Peso/Grau de Influência (%)', y='Variável', orientation='h',
-        title='Análise de Atributos (Caixa Preta): Random Forest',
-        template='plotly_white', color='Variável',
-        color_discrete_sequence=['#0072B2', '#E69F00', '#009E73', '#D55E00'] 
-    )
-    fig_rf.update_traces(textposition='outside', texttemplate='<b>%{x:.1f}%</b>', textfont_size=13)
-    fig_rf.update_layout(
-        xaxis=dict(range=[0, 100], ticksuffix='%'), 
-        yaxis={'categoryorder': 'total ascending'},
-        margin=dict(r=80, l=20, t=50, b=20), height=380, showlegend=False
-    )
-
-    # ==========================================
-    # 2. DADOS DA ÁRVORE DE DECISÃO
-    # ==========================================
+    # --- DADOS DA ÁRVORE DE DECISÃO ---
     df_treino_dt = pd.DataFrame({
         'Classe / Métrica': ['Fluxo Normal (0)', 'Gargalo/Atraso (1)', 'accuracy', 'macro avg', 'weighted avg'],
         'precision': ['0.94', '0.85', '', '0.89', '0.92'],
@@ -78,7 +53,6 @@ def render_rf():
         'f1-score': ['0.95', '0.82', '0.92', '0.88', '0.92'],
         'support': ['356981', '101279', '458260', '458260', '458260']
     })
-
     df_teste_dt = pd.DataFrame({
         'Classe / Métrica': ['Fluxo Normal (0)', 'Gargalo/Atraso (1)', 'accuracy', 'macro avg', 'weighted avg'],
         'precision': ['0.92', '0.77', '', '0.85', '0.89'],
@@ -87,27 +61,7 @@ def render_rf():
         'support': ['89353', '25213', '114566', '114566', '114566']
     })
 
-    df_imp_dt = pd.DataFrame({
-        'Variável': ['Serviço', 'Bairro', 'Mês', 'Dia da Semana'],
-        'Peso/Grau de Influência (%)': [79.1, 10.1, 5.6, 5.2]
-    })
-
-    fig_dt = px.bar(
-        df_imp_dt, x='Peso/Grau de Influência (%)', y='Variável', orientation='h',
-        title='Análise de Atributos (Caixa Preta): Árvore de Decisão',
-        template='plotly_white', color='Variável',
-        color_discrete_sequence=['#0072B2', '#E69F00', '#009E73', '#D55E00'] 
-    )
-    fig_dt.update_traces(textposition='outside', texttemplate='<b>%{x:.1f}%</b>', textfont_size=13)
-    fig_dt.update_layout(
-        xaxis=dict(range=[0, 100], ticksuffix='%'), 
-        yaxis={'categoryorder': 'total ascending'},
-        margin=dict(r=80, l=20, t=50, b=20), height=380, showlegend=False
-    )
-
-    # ==========================================
-    # 3. DADOS DA REGRESSÃO LOGÍSTICA
-    # ==========================================
+    # --- DADOS DA REGRESSÃO LOGÍSTICA ---
     df_treino_lr = pd.DataFrame({
         'Classe / Métrica': ['Fluxo Normal (0)', 'Gargalo/Atraso (1)', 'accuracy', 'macro avg', 'weighted avg'],
         'precision': ['0.78', '0.00', '', '0.39', '0.61'],
@@ -116,98 +70,66 @@ def render_rf():
         'support': ['356981', '101279', '458260', '458260', '458260']
     })
 
-    df_imp_lr = pd.DataFrame({
-        'Variável': ['Mês', 'Serviço', 'Dia da Semana', 'Bairro'],
-        'Peso/Grau de Influência (%)': [37.9, 37.2, 24.4, 0.6]
-    })
-
-    fig_lr = px.bar(
-        df_imp_lr, x='Peso/Grau de Influência (%)', y='Variável', orientation='h',
-        title='Análise de Atributos (Caixa Preta): Regressão Logística',
-        template='plotly_white', color='Variável',
-        color_discrete_sequence=['#0072B2', '#E69F00', '#009E73', '#D55E00'] 
-    )
-    fig_lr.update_traces(textposition='outside', texttemplate='<b>%{x:.1f}%</b>', textfont_size=13)
-    fig_lr.update_layout(
-        xaxis=dict(range=[0, 50], ticksuffix='%'), 
-        yaxis={'categoryorder': 'total ascending'},
-        margin=dict(r=80, l=20, t=50, b=20), height=380, showlegend=False
-    )
-
-    # ==========================================
-    # 4. LAYOUT FINAL DA PÁGINA
-    # ==========================================
     return dbc.Container([
-        html.H3("Avaliação de Desempenho - Modelos Preditivos", className="text-primary mt-4 fw-bold"),
-        html.P("Exibição detalhada dos relatórios de classificação estruturados diretamente a partir dos logs de execução do Pipeline KDD.", className="text-secondary mb-4"),
+        html.H3("ML1: Explicabilidade e Performance com SHAP", className="text-primary mt-4 fw-bold"),
+        html.P("Auditoria metodológica cruzando os relatórios de classificação com as saídas estatísticas locais e globais do SHAP.", className="text-secondary mb-4"),
         
-        # --- BANNER DE VENCEDOR ---
-        dbc.Alert([
-            html.I(className="fa-solid fa-trophy me-2"),
-            html.B("Modelo Selecionado: Random Forest. "),
-            "Apresentou a melhor capacidade de generalização no mundo real (Base de Teste) com o maior F1-Score na classe de Gargalos, equilibrando o desbalanceamento das classes e controlando o overfitting gerado pela Árvore de Decisão Simples."
-        ], color="success", className="shadow-sm rounded-pill mb-5 border-0"),
-
-        # --- CARD 1: RANDOM FOREST (VENCEDOR) ---
+        # --- CARD 1: RANDOM FOREST ---
         dbc.Card([
-            dbc.CardHeader(
-                html.H5("1. RANDOM FOREST (VENCEDOR) - RELATÓRIOS COMPARATIVOS", className="mb-0 fw-bold text-white"), 
-                className="bg-primary"
-            ),
+            dbc.CardHeader(html.H5("1. RANDOM FOREST (VENCEDOR)", className="mb-0 fw-bold text-white"), className="bg-primary"),
             dbc.CardBody([
                 dbc.Row([
                     dbc.Col([
-                        html.H6("Acurácia (Treino - 80%): 92.25%", className="fw-bold mb-3 text-dark", style={'fontFamily': 'monospace', 'fontSize': '15px'}),
+                        html.H6("Acurácia Treino - 80%: 92.25%", className="fw-bold mb-2 small text-muted", style={'fontFamily': 'monospace'}),
                         gerar_tabela_terminal(df_treino_rf)
-                    ], width=12, lg=6, className="mb-4 mb-lg-0 border-end-lg"),
-                    
+                    ], width=12, lg=6, className="mb-3 mb-lg-0"),
                     dbc.Col([
-                        html.H6("Acurácia (Teste - 20%): 89.40%", className="fw-bold mb-3 text-dark", style={'fontFamily': 'monospace', 'fontSize': '15px'}),
+                        html.H6("Acurácia Teste - 20%: 89.40%", className="fw-bold mb-2 small text-muted", style={'fontFamily': 'monospace'}),
                         gerar_tabela_terminal(df_teste_rf)
-                    ], width=12, lg=6)
+                    ], width=12, lg=6),
                 ]),
-                
-                html.Hr(className="my-5"),
-                dcc.Graph(figure=fig_rf, config={'displayModeBar': False})
+                html.Hr(className="my-4"),
+                # Inclusão das Imagens SHAP lado a lado
+                dbc.Row([
+                    dbc.Col(html.Img(src='/assets/shap_random_forest_bar.png', className='img-fluid shadow-sm rounded border'), width=12, md=6, className="mb-3 mb-md-0"),
+                    dbc.Col(html.Img(src='/assets/shap_random_forest_beeswarm.png', className='img-fluid shadow-sm rounded border'), width=12, md=6),
+                ])
             ])
         ], className="shadow border-0 mb-5 border-start border-primary border-5"),
 
         # --- CARD 2: ÁRVORE DE DECISÃO ---
         dbc.Card([
-            dbc.CardHeader(
-                html.H5("2. ÁRVORE DE DECISÃO CLÁSSICA - RELATÓRIOS COMPARATIVOS", className="mb-0 fw-bold text-white"), 
-                style={"backgroundColor": "#D55E00"} 
-            ),
+            dbc.CardHeader(html.H5("2. ÁRVORE DE DECISÃO CLÁSSICA", className="mb-0 fw-bold text-white"), style={"backgroundColor": "#D55E00"}),
             dbc.CardBody([
                 dbc.Row([
                     dbc.Col([
-                        html.H6("Acurácia (Treino - 80%): 92.25%", className="fw-bold mb-3 text-dark", style={'fontFamily': 'monospace', 'fontSize': '15px'}),
+                        html.H6("Acurácia Treino - 80%: 92.25%", className="fw-bold mb-2 small text-muted", style={'fontFamily': 'monospace'}),
                         gerar_tabela_terminal(df_treino_dt)
-                    ], width=12, lg=6, className="mb-4 mb-lg-0 border-end-lg"),
-                    
+                    ], width=12, lg=6, className="mb-3 mb-lg-0"),
                     dbc.Col([
-                        html.H6("Acurácia (Teste - 20%): 89.11%", className="fw-bold mb-3 text-dark", style={'fontFamily': 'monospace', 'fontSize': '15px'}),
+                        html.H6("Acurácia Teste - 20%: 89.11%", className="fw-bold mb-2 small text-muted", style={'fontFamily': 'monospace'}),
                         gerar_tabela_terminal(df_teste_dt)
-                    ], width=12, lg=6)
+                    ], width=12, lg=6),
                 ]),
-                
-                html.Hr(className="my-5"),
-                dcc.Graph(figure=fig_dt, config={'displayModeBar': False})
+                html.Hr(className="my-4"),
+                dbc.Row([
+                    dbc.Col(html.Img(src='/assets/shap_arvore_de_decisao_bar.png', className='img-fluid shadow-sm rounded border'), width=12, md=6, className="mb-3 mb-md-0"),
+                    dbc.Col(html.Img(src='/assets/shap_arvore_de_decisao_beeswarm.png', className='img-fluid shadow-sm rounded border'), width=12, md=6),
+                ])
             ])
         ], className="shadow border-0 mb-5"),
 
         # --- CARD 3: REGRESSÃO LOGÍSTICA ---
         dbc.Card([
-            dbc.CardHeader(
-                html.H5("3. REGRESSÃO LOGÍSTICA - [DESEMPENHO NO TREINO - 80%]", className="mb-0 fw-bold text-white"), 
-                className="bg-dark"
-            ),
+            dbc.CardHeader(html.H5("3. REGRESSÃO LOGÍSTICA", className="mb-0 fw-bold text-white"), className="bg-dark"),
             dbc.CardBody([
-                html.H6("Acurácia: 77.90%", className="fw-bold mb-3 text-dark", style={'fontFamily': 'monospace', 'fontSize': '16px'}),
+                html.H6("Acurácia Treino - 80%: 77.90%", className="fw-bold mb-2 small text-muted", style={'fontFamily': 'monospace'}),
                 gerar_tabela_terminal(df_treino_lr),
-                html.Hr(className="my-5"),
-                dcc.Graph(figure=fig_lr, config={'displayModeBar': False})
+                html.Hr(className="my-4"),
+                dbc.Row([
+                    dbc.Col(html.Img(src='/assets/shap_regressao_logistica_bar.png', className='img-fluid shadow-sm rounded border'), width=12, md=6, className="mb-3 mb-md-0"),
+                    dbc.Col(html.Img(src='/assets/shap_regressao_logistica_beeswarm.png', className='img-fluid shadow-sm rounded border'), width=12, md=6),
+                ])
             ])
         ], className="shadow border-0 mb-5")
-
     ], fluid=True)
