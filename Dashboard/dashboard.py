@@ -68,7 +68,7 @@ app.layout = html.Div([dcc.Location(id="url"), navbar, content])
 @app.callback(Output("page-content", "children"), [Input("url", "pathname")])
 def navigate(path):
     if path == "/eda": 
-        return render_eda(anos_reais)
+        return render_eda(anos_reais, df_geral)
     if path == "/rf": 
         return render_rf()
     if path == "/cluster": 
