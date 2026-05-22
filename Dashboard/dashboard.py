@@ -72,7 +72,7 @@ def navigate(path):
     if path == "/rf": 
         return render_rf()
     if path == "/cluster": 
-        return render_cluster()
+        return render_cluster(df_geral)
     return render_home(total_registros)
 
 # ==========================================
