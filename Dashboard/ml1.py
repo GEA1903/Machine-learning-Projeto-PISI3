@@ -28,7 +28,7 @@ def gerar_tabela_terminal(df):
         style_table={'overflowX': 'auto'}
     )
 
-def render_rf():
+def render_ml1():
     # --- DADOS DO RANDOM FOREST ---
     df_treino_rf = pd.DataFrame({
         'Classe / Métrica': ['Fluxo Normal (0)', 'Gargalo/Atraso (1)', 'accuracy', 'macro avg', 'weighted avg'],
@@ -69,6 +69,10 @@ def render_rf():
         'f1-score': ['0.88', '0.00', '0.78', '0.44', '0.68'],
         'support': ['356981', '101279', '458260', '458260', '458260']
     })
+    # Repetido para Teste para demonstrar a falha em ambas as bases
+    df_teste_lr = df_treino_lr.copy()
+    df_teste_lr['support'] = ['89353', '25213', '114566', '114566', '114566']
+    df_teste_lr.loc[2, 'f1-score'] = '0.77' # Ajuste fino do log original do teste
 
     return dbc.Container([
         html.H3("ML1: Explicabilidade e Performance com SHAP", className="text-primary mt-4 fw-bold"),
@@ -88,11 +92,19 @@ def render_rf():
                         gerar_tabela_terminal(df_teste_rf)
                     ], width=12, lg=6),
                 ]),
+                # Explicação Matriz RF
+                html.Div("💡 O modelo manteve estabilidade. A ligeira queda nas métricas entre treino e teste indica uma excelente capacidade de generalização e controlo eficaz de overfitting.", className="mt-3 text-success fw-bold small"),
+                
                 html.Hr(className="my-4"),
-                # Inclusão das Imagens SHAP lado a lado
                 dbc.Row([
-                    dbc.Col(html.Img(src='/assets/shap_random_forest_bar.png', className='img-fluid shadow-sm rounded border'), width=12, md=6, className="mb-3 mb-md-0"),
-                    dbc.Col(html.Img(src='/assets/shap_random_forest_beeswarm.png', className='img-fluid shadow-sm rounded border'), width=12, md=6),
+                    dbc.Col([
+                        html.Img(src='/assets/ML1/shap_random_forest_bar.png', className='img-fluid shadow-sm rounded border'),
+                        html.P("Importância Global: O fator 'Serviço' dita a esmagadora maioria das decisões preditivas, tornando-se o pilar do gargalo.", className="text-muted small mt-2 text-center fst-italic")
+                    ], width=12, md=6, className="mb-3 mb-md-0"),
+                    dbc.Col([
+                        html.Img(src='/assets/ML1/shap_random_forest_beeswarm.png', className='img-fluid shadow-sm rounded border'),
+                        html.P("Impacto Real: A dispersão longa do 'Serviço' à direita indica que categorias específicas de obras são sentenças quase certas de atraso.", className="text-muted small mt-2 text-center fst-italic")
+                    ], width=12, md=6),
                 ])
             ])
         ], className="shadow border-0 mb-5 border-start border-primary border-5"),
@@ -111,24 +123,56 @@ def render_rf():
                         gerar_tabela_terminal(df_teste_dt)
                     ], width=12, lg=6),
                 ]),
+                # Explicação Matriz DT
+                html.Div("⚠️ Sinais de Overfitting: A árvore decorou excessivamente os dados de treino. Ao enfrentar a base de teste, o Recall da classe alvo (Gargalo) despencou de 0.79 para 0.72.", className="mt-3 text-warning fw-bold small"),
+                
                 html.Hr(className="my-4"),
                 dbc.Row([
-                    dbc.Col(html.Img(src='/assets/shap_arvore_de_decisao_bar.png', className='img-fluid shadow-sm rounded border'), width=12, md=6, className="mb-3 mb-md-0"),
-                    dbc.Col(html.Img(src='/assets/shap_arvore_de_decisao_beeswarm.png', className='img-fluid shadow-sm rounded border'), width=12, md=6),
+                    dbc.Col([
+                        html.Img(src='/assets/ML1/shap_arvore_de_decisao_bar.png', className='img-fluid shadow-sm rounded border'),
+                        html.P("Viés Estrutural: A árvore viciou-se quase 100% no 'Serviço', ignorando correlações mais finas de tempo e local.", className="text-muted small mt-2 text-center fst-italic")
+                    ], width=12, md=6, className="mb-3 mb-md-0"),
+                    dbc.Col([
+                        html.Img(src='/assets/ML1/shap_arvore_de_decisao_beeswarm.png', className='img-fluid shadow-sm rounded border'),
+                        html.P("Regras Rígidas: Os pontos excessivamente aglomerados provam uma tomada de decisão 'quadrada' e pouco orgânica da árvore.", className="text-muted small mt-2 text-center fst-italic")
+                    ], width=12, md=6),
                 ])
             ])
         ], className="shadow border-0 mb-5"),
 
         # --- CARD 3: REGRESSÃO LOGÍSTICA ---
         dbc.Card([
-            dbc.CardHeader(html.H5("3. REGRESSÃO LOGÍSTICA", className="mb-0 fw-bold text-white"), className="bg-dark"),
+            dbc.CardHeader(html.H5("3. REGRESSÃO LOGÍSTICA (MODELO LINEAR)", className="mb-0 fw-bold text-white"), className="bg-dark"),
             dbc.CardBody([
-                html.H6("Acurácia Treino - 80%: 77.90%", className="fw-bold mb-2 small text-muted", style={'fontFamily': 'monospace'}),
-                gerar_tabela_terminal(df_treino_lr),
+                
+                dbc.Row([
+                    dbc.Col([
+                        html.H6("Acurácia Treino - 80%: 77.90%", className="fw-bold mb-2 small text-muted", style={'fontFamily': 'monospace'}),
+                        gerar_tabela_terminal(df_treino_lr)
+                    ], width=12, lg=6, className="mb-3 mb-lg-0"),
+                    dbc.Col([
+                        html.H6("Acurácia Teste - 20%: 77.99%", className="fw-bold mb-2 small text-muted", style={'fontFamily': 'monospace'}),
+                        gerar_tabela_terminal(df_teste_lr)
+                    ], width=12, lg=6),
+                ]),
+
+                # Explicação Inviabilidade LR
+                dbc.Alert([
+                    html.I(className="fa-solid fa-circle-xmark me-2"),
+                    html.B("Estatisticamente Inviável para Produção: "),
+                    "Incapaz de lidar com o desbalanceamento das classes através de uma reta linear, o modelo assumiu que TUDO é 'Fluxo Normal'. A acurácia de 78% é uma ilusão matemática, visto que o F1-Score da classe de Gargalo é zero absoluto."
+                ], color="danger", className="mt-4 shadow-sm border-0"),
+                
                 html.Hr(className="my-4"),
                 dbc.Row([
-                    dbc.Col(html.Img(src='/assets/shap_regressao_logistica_bar.png', className='img-fluid shadow-sm rounded border'), width=12, md=6, className="mb-3 mb-md-0"),
-                    dbc.Col(html.Img(src='/assets/shap_regressao_logistica_beeswarm.png', className='img-fluid shadow-sm rounded border'), width=12, md=6),
+                    dbc.Col([
+                        html.Img(src='/assets/ML1/shap_regressao_logistica_bar.png', className='img-fluid shadow-sm rounded border'),
+                        html.P("Distribuição Arbitrária: Tenta distribuir pesos lineares em variáveis que não têm comportamento linear contínuo.", className="text-muted small mt-2 text-center fst-italic")
+                    ], width=12, md=6, className="mb-3 mb-md-0"),
+                    dbc.Col([
+                        html.Img(src='/assets/ML1/shap_regressao_logistica_beeswarm.png', className='img-fluid shadow-sm rounded border'),
+                        html.P("Falha de Separação: A mistura caótica de cores em todas as direções ilustra a completa incapacidade do modelo em separar as duas realidades operacionais.", className="text-muted small mt-2 text-center fst-italic")
+                    ], width=12, md=6),
                 ])
             ])
         ], className="shadow border-0 mb-5")

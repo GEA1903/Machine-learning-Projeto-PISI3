@@ -120,7 +120,7 @@ for nome, modelo in modelos_treinados.items():
     plt.title(f"SHAP Importância de Atributos: {nome}", fontsize=12, pad=15)
     plt.tight_layout()
     # Salva diretamente na subpasta do dashboard
-    plt.savefig(f'dashboard/assets/shap_{nome_slug}_bar.png', dpi=150)
+    plt.savefig(f'dashboard/assets/ML1/shap_{nome_slug}_bar.png', dpi=150)
     plt.close() 
 
     # Gráfico SHAP Enxame de Abelhas
@@ -129,7 +129,7 @@ for nome, modelo in modelos_treinados.items():
     plt.title(f"SHAP Enxame de Abelhas (Impacto): {nome}", fontsize=12, pad=15)
     plt.tight_layout()
     # Salva diretamente na subpasta do dashboard
-    plt.savefig(f'dashboard/assets/shap_{nome_slug}_beeswarm.png', dpi=150)
+    plt.savefig(f'dashboard/assets/ML1/shap_{nome_slug}_beeswarm.png', dpi=150)
     plt.close()
 
-print("\nSUCESSO! Todos os gráficos SHAP foram consolidados na pasta 'dashboard/assets'.")
+print("\nSUCESSO! Todos os gráficos SHAP foram consolidados na pasta 'dashboard/assets/ML1'.")

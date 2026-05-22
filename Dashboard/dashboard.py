@@ -8,7 +8,8 @@ import os
 # IMPORTAÇÃO DOS NOSSOS MÓDULOS DE PÁGINAS
 from home import render_home
 from eda import render_eda
-from rf import render_rf
+from ml1 import render_ml1
+from ml2 import render_ml2
 from cluster import render_cluster
 
 # ==========================================
@@ -48,7 +49,10 @@ navbar = dbc.NavbarSimple(
     children=[
         dbc.NavItem(dbc.NavLink("Página Inicial", href="/")),
         dbc.NavItem(dbc.NavLink("EDA (Os 3 Atos)", href="/eda")),
-        dbc.NavItem(dbc.NavLink("Random Forest", href="/rf")),
+        dbc.DropdownMenu([
+            dbc.DropdownMenuItem("Machine Learning 1", href="/ml1"),
+            dbc.DropdownMenuItem("Machine Learning 2", href="/ml2")
+        ], label="Machine Learning", nav=True),
         dbc.NavItem(dbc.NavLink("Clusterização", href="/cluster")),
     ],
     brand="REPORT!",
@@ -69,8 +73,10 @@ app.layout = html.Div([dcc.Location(id="url"), navbar, content])
 def navigate(path):
     if path == "/eda": 
         return render_eda(anos_reais, df_geral)
-    if path == "/rf": 
-        return render_rf()
+    if path == "/ml1": 
+        return render_ml1()
+    if path == "/ml2": 
+        return render_ml2()
     if path == "/cluster": 
         return render_cluster(df_geral)
     return render_home(total_registros)
