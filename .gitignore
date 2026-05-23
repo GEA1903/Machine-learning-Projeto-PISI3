@@ -3,4 +3,5 @@
 # Modelos e encoders gerados localmente (não versionar binários pesados)
 *.pkl
 # Script gerado automaticamente pelo nbconvert (usar o .ipynb como fonte)
-analise_exploratoria_run.py
+analise_exploratoria_run.py
+venv/

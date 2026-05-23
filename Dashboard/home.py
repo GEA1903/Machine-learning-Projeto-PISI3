@@ -41,7 +41,9 @@ def render_home(total_registros):
                             "operacionais e estimativa de prazos de resolução com precisão matemática.",
                             className="card-text text-muted", style={'min-height': '80px'}
                         ),
-                        dbc.Button("Ver Performance", href="/rf", color="success", className="w-100 rounded-pill mt-3")
+                        dbc.Button("Machine Learning 1", href="/ml1", color="success", className="w-100 rounded-pill mt-3"),
+                        dbc.Button("Machine Learning 2", href="/ml2", color="success", className="w-100 rounded-pill mt-3")
+                        
                     ])
                 ], className="h-100 shadow border-0 hover-shadow")
             ], width=12, md=4, className="mb-4"),
