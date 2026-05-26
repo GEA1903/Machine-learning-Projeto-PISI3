@@ -9,6 +9,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score, classification_report
 import joblib
+from xgboost import XGBClassifier
 
 # Ignorar avisos irrelevantes do pandas
 warnings.filterwarnings('ignore')
@@ -48,9 +49,9 @@ print(f" -> Ensinando as IAs com {len(X_train)} registros...\n")
 modelos = {
     'Random Forest': RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1),
     'Árvore de Decisão': DecisionTreeClassifier(random_state=42),
-    'Regressão Logística': LogisticRegression(random_state=42, max_iter=500)
+    'Regressão Logística': LogisticRegression(random_state=42, max_iter=500),
+    'XGBoost': XGBClassifier(n_estimators=100, random_state=42, eval_metric='logloss', n_jobs=-1)
 }
-
 modelos_treinados = {}
 
 for nome, modelo in modelos.items():
@@ -98,8 +99,9 @@ X_bg = X_train.sample(n=100, random_state=42)
 for nome, modelo in modelos_treinados.items():
     print(f" -> Processando SHAP e exportando imagens para: {nome}...")
     
-    if isinstance(modelo, (RandomForestClassifier, DecisionTreeClassifier)):
+    if isinstance(modelo, (RandomForestClassifier, DecisionTreeClassifier, XGBClassifier)):
         explainer = shap.TreeExplainer(modelo)
+        shap_values_raw = explainer(X_shap)
         shap_values_raw = explainer(X_shap)
         if len(shap_values_raw.shape) == 3:
             shap_values = shap_values_raw[:, :, 1]

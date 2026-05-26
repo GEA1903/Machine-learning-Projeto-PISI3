@@ -10,7 +10,7 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, r2_score
 import joblib
-
+from xgboost import XGBRegressor
 # Ignorar avisos irrelevantes do pandas
 warnings.filterwarnings('ignore')
 print("Iniciando Pipeline KDD (Previsão de Prazo de Resolução)...")
@@ -56,7 +56,8 @@ modelos_regressao = {
         n_jobs=-1
     ),
     'Árvore de Decisão Regressora': DecisionTreeRegressor(random_state=42),
-    'Regressão Linear': LinearRegression()
+    'Regressão Linear': LinearRegression(),
+    'XGBoost Regressor': XGBRegressor(n_estimators=150, max_depth=15, random_state=42, n_jobs=-1)
 }
 
 modelos_treinados = {}
@@ -101,7 +102,7 @@ X_bg = X_train.sample(n=100, random_state=42)
 for nome, modelo in modelos_treinados.items():
     print(f" -> Processando SHAP e exportando imagens para: {nome}...")
     
-    if isinstance(modelo, (RandomForestRegressor, DecisionTreeRegressor)):
+    if isinstance(modelo, (RandomForestRegressor, DecisionTreeRegressor, XGBRegressor)):
         explainer = shap.TreeExplainer(modelo)
         shap_values = explainer(X_shap)
     elif isinstance(modelo, LinearRegression):
