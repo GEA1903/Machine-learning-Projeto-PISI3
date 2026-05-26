@@ -25,7 +25,8 @@ def render_home(total_registros):
                             "Identifique sazonalidade, bairros críticos e taxas de ineficiência.",
                             className="card-text text-muted", style={'min-height': '80px'}
                         ),
-                        dbc.Button("Acessar Gráficos", href="/eda", color="primary", className="w-100 rounded-pill mt-3")
+                        dbc.Button("Acessar Gráficos", href="/eda", color="primary", className="w-100 rounded-pill mt-3"),
+                        dbc.Button("Ver Correlações", href="/correlacao", color="primary", className="w-100 rounded-pill mt-3")
                     ])
                 ], className="h-100 shadow border-0 hover-shadow")
             ], width=12, md=4, className="mb-4"),
