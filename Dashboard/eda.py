@@ -64,6 +64,7 @@ def render_eda(anos_reais, df_all=None):
 
     return dbc.Container([
         
+        # --- FILTRO TEMPORAL ---
         dbc.Card([
             dbc.CardBody([
                 dbc.Row([
@@ -94,6 +95,84 @@ def render_eda(anos_reais, df_all=None):
             ])
         ], className="mb-4 shadow-sm border-0 bg-light"),
 
+        # ==========================================
+        # GRÁFICO CUSTOMIZÁVEL (Layout em Containers Flutuantes)
+        # ==========================================
+        dbc.Card([
+            dbc.CardHeader(html.H5("Motor de BI: Cruzamento e Auditoria sob Demanda", className="mb-0 fw-bold text-white"), className="bg-info"),
+            dbc.CardBody([
+                dbc.Row([
+                    # Container 1: BAIRRO
+                    dbc.Col([
+                        html.Div([
+                            html.Label("Bairro", className="fw-bold text-primary mb-2 fs-5"),
+                            dcc.Dropdown(
+                                id='bairro-autocomplete',
+                                multi=True,
+                                searchable=True,
+                                placeholder="Buscar (Máx 5)...",
+                                options=[], 
+                                className="mb-2"
+                            ),
+                            # Local onde os balõezinhos do bairro vão renderizar
+                            html.Div(id='bairro-badges', className="d-flex flex-wrap gap-2 mt-3")
+                        ], className="shadow rounded-4 p-4 bg-white border-0 h-100")
+                    ], width=12, md=4, className="mb-4 mb-md-0"),
+                    
+                    # Container 2: DENÚNCIA
+                    dbc.Col([
+                        html.Div([
+                            html.Label("Denúncia", className="fw-bold text-success mb-2 fs-5"),
+                            dbc.RadioItems(
+                                id='modo-servico',
+                                options=[
+                                    {'label': 'Manual', 'value': 'manual'},
+                                    {'label': 'Todos', 'value': 'todos'},
+                                    {'label': 'Exceto', 'value': 'exceto'}
+                                ],
+                                value='todos',
+                                inline=True,
+                                className="mb-2 small fw-bold text-secondary"
+                            ),
+                            dcc.Dropdown(
+                                id='servico-autocomplete',
+                                multi=True,
+                                searchable=True,
+                                placeholder="Buscar denúncia...",
+                                options=[], 
+                                disabled=True,
+                                className="mb-2"
+                            ),
+                            # Local onde os balõezinhos das denúncias vão renderizar
+                            html.Div(id='servico-badges', className="d-flex flex-wrap gap-2 mt-3")
+                        ], className="shadow rounded-4 p-4 bg-white border-0 h-100")
+                    ], width=12, md=4, className="mb-4 mb-md-0"),
+
+                    # Container 3: MÉTRICA
+                    dbc.Col([
+                        html.Div([
+                            html.Label("Métrica", className="fw-bold text-dark mb-2 fs-5"),
+                            dcc.Dropdown(
+                                id='metrica-analise',
+                                options=[
+                                    {'label': 'Volume Absoluto', 'value': 'total'},
+                                    {'label': 'Resolvidas (Qtd e %)', 'value': 'resolvidas'},
+                                    {'label': 'Pendentes (Gargalo)', 'value': 'pendentes'},
+                                    {'label': 'Termômetro (ISO)', 'value': 'iso'}
+                                ],
+                                value='total',
+                                clearable=False,
+                                className="mt-4" 
+                            )
+                        ], className="shadow rounded-4 p-4 bg-white border-0 h-100")
+                    ], width=12, md=4)
+                ], className="mb-5 mt-2"), # Espaçamento extra antes do gráfico
+                
+                dcc.Graph(id='custom-top-chart', config={'displayModeBar': False})
+            ], className="bg-light") # Fundo cinza claro para destacar os containers brancos
+        ], className="shadow border-0 mb-5 border-start border-info border-5"),
+
+        # --- OS 3 ATOS ---
         dbc.Row([
             dbc.Col(dbc.Card([dbc.CardBody(dcc.Graph(id='ato-1'))], className="mb-4 shadow border-0"), width=12),
             dbc.Col(dbc.Card([dbc.CardBody(dcc.Graph(id='ato-2'))], className="mb-4 shadow border-0"), width=12),
