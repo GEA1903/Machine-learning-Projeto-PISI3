@@ -130,7 +130,7 @@ fig1 = px.line(
     vol_mensal, 
     x='Ano', 
     y='Volume de Denúncias', 
-    title='Evolução do Volume Total de Denúncias',
+    title='1. Evolução do Volume Total de Denúncias',
     markers=True
 )
 
@@ -182,7 +182,7 @@ fig3 = px.density_heatmap(
     x='Mes', 
     y='Dia_Semana', 
     z='Volume',
-    title='2. Padrão de Acessos: Dias da Semana vs Meses do Ano',
+    title='3. Padrão de Acessos: Dias da Semana vs Meses do Ano',
     category_orders={'Dia_Semana': ordem_dias},
     color_continuous_scale='Cividis',  # Cividis: máximo contraste para daltônicos em escalas contínuas
     labels={'Mes': 'Mês do Ano', 'Dia_Semana': 'Dia da Semana'}
@@ -198,7 +198,7 @@ top10_bairros = df_all['BAIRRO'].value_counts().head(10).reset_index()
 top10_bairros.columns = ['Bairro', 'Volume']
 
 fig4 = px.bar(top10_bairros, x='Volume', y='Bairro', orientation='h',
-              title='3. Ranking de Volume: Top 10 Bairros Críticos',
+              title='4. Ranking de Volume: Top 10 Bairros Críticos',
               color='Bairro',                      # Cor por rótulo: cada barra com cor única
               color_discrete_sequence=OKABE_ITO)   # Okabe-Ito: seguro para daltônicos
 fig4.update_layout(yaxis={'categoryorder':'total ascending'}, showlegend=False)
@@ -230,7 +230,7 @@ fig6 = px.bar(
     x='BAIRRO', 
     y='Porcentagem', 
     color='SITUACAO',
-    title='4. Proporção de Resoluções nos 5 Bairros Críticos',
+    title='6. Proporção de Resoluções nos 5 Bairros Críticos',
     labels={'Porcentagem': 'Porcentagem (%)', 'BAIRRO': 'Bairro'},
     barmode='stack',
     color_discrete_sequence=OKABE_ITO  # Okabe-Ito: seguro para daltônicos
@@ -250,7 +250,7 @@ fig_vias = px.bar(
     x='Quantidade_Defeitos',
     y='Logradouro',
     orientation='h',
-    title='5. Top 10 Vias Mais Críticas (Maior Número de Defeitos)',
+    title='7. Top 10 Vias Mais Críticas (Maior Número de Defeitos)',
     labels={'Quantidade_Defeitos': 'Nº de Ocorrências', 'Logradouro': 'Via/Logradouro'},
     color='Logradouro',                    # Cor por rótulo: cada barra com cor única
     color_discrete_sequence=OKABE_ITO      # Okabe-Ito: seguro para daltônicos
@@ -370,7 +370,7 @@ fig_story1 = px.line(
     y='Volume', 
     color='GRUPOSERVICO_DESCRICAO',
     markers=True,
-    title='Ato 1: O Ciclo de Vida dos Maiores Problemas (Top 5 Categorias)',
+    title='11. Ato 1: O Ciclo de Vida dos Maiores Problemas (Top 5 Categorias)',
     labels={'Mes': 'Mês do Ano', 'Volume': 'Volume de Solicitações'},
     color_discrete_sequence=OKABE_ITO  # Okabe-Ito: seguro para daltônicos
 )
@@ -397,7 +397,7 @@ fig_story2 = px.bar(
     orientation='h',
     color='Bairro',                        # Cor por rótulo: cada barra com cor única
     color_discrete_sequence=OKABE_ITO,     # Okabe-Ito: seguro para daltônicos
-    title='Ato 2: Onde a Fila Trava? (Top 10 Bairros com Mais Pendências no Top 5)'
+    title='12. Ato 2: Onde a Fila Trava? (Top 10 Bairros com Mais Pendências no Top 5)'
 )
 fig_story2.update_layout(yaxis={'categoryorder':'total ascending'}, showlegend=False)
 fig_story2.show()
@@ -427,7 +427,7 @@ fig_story3_novo = px.bar(
     color='GRUPOSERVICO_DESCRICAO',
     barmode='group',
     text_auto='.1f', # Coloca o valor exato em cima de cada barra
-    title='Ato 3: Qual serviço é mais negligenciado nos bairros em crise?',
+    title='13. Ato 3: Qual serviço é mais negligenciado nos bairros em crise?',
     labels={
         'BAIRRO': 'Bairros Críticos (TOP 5)', 
         'Taxa_Ineficiencia_%': 'Taxa de Ineficiência (%)',
@@ -463,7 +463,7 @@ fig_tempo = px.bar(
     x='TEMPO_DIAS',
     y='GRUPOSERVICO_DESCRICAO',
     orientation='h',
-    title='Tempo Médio de Resolução da Prefeitura',
+    title='14. Tempo Médio de Resolução da Prefeitura',
     text='TEMPO_DIAS',
     color='GRUPOSERVICO_DESCRICAO',        # Cor por rótulo: cada barra com cor única
     color_discrete_sequence=OKABE_ITO,     # Okabe-Ito: seguro para daltônicos
@@ -529,7 +529,7 @@ fig_cluster = px.scatter(
     color='Perfil_do_Bairro',
     size='Volume_Total', # OTIMIZAÇÃO 2: O tamanho da bolha agora representa o impacto na cidade
     hover_name='BAIRRO',
-    title='Clusterização K-Means: Perfil de Crise dos Bairros (Otimizado)',
+    title='15. Clusterização K-Means: Perfil de Crise dos Bairros (Otimizado)',
     labels={
         'Volume_Total': 'Volume Total de Ocorrências', 
         'Taxa_Ineficiencia_%': 'Taxa de Ineficiência (%)'
@@ -579,7 +579,7 @@ fig_cluster_2 = px.scatter(
     color='Perfil_Aglo',
     size='Volume_Total', # A proporcionalidade volumétrica das coordenadas é preservada
     hover_name='BAIRRO',
-    title='Clusterização Hierárquica: Perfil de Crise dos Bairros (Comparativo)',
+    title='16. Clusterização Hierárquica: Perfil de Crise dos Bairros (Comparativo)',
     labels={
         'Volume_Total': 'Volume Total de Ocorrências', 
         'Taxa_Ineficiencia_%': 'Taxa de Ineficiência (%)'
