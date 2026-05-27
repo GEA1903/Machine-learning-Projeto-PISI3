@@ -85,7 +85,7 @@ for nome, modelo in modelos_regressao.items():
 # ==========================================
 print("Salvando o Random Forest Regressor e os encoders para o ecossistema do App...")
 modelo_vencedor_ml2 = modelos_treinados['Random Forest Regressor']
-joblib.dump(modelo_vencedor_ml2, 'modelo_prazo_ml2.pkl')
+joblib.dump(modelo_vencedor_ml2, 'modelo_prazo_ml2.pkl', compress=3)
 joblib.dump(encoder_bairro_ml2, 'encoder_bairro_ml2.pkl')
 joblib.dump(encoder_servico_ml2, 'encoder_servico_ml2.pkl')
 
