@@ -29,35 +29,37 @@ def gerar_tabela_terminal(df):
     )
 
 def render_ml1():
-    # --- DADOS DAS MATRIZES ---
+    # --- DADOS DAS MATRIZES ATUALIZADAS (FEATURE ENGINEERING) ---
     df_treino_dt = pd.DataFrame({
         'Classe / Métrica': ['Fluxo Normal (0)', 'Gargalo (1)', 'accuracy', 'macro avg', 'weighted avg'],
-        'precision': ['0.94', '0.85', '', '0.89', '0.92'], 'recall': ['0.96', '0.79', '', '0.88', '0.92'],
-        'f1-score': ['0.95', '0.82', '0.92', '0.88', '0.92'], 'support': ['356981', '101279', '458260', '458260', '458260']
+        'precision': ['0.97', '0.96', '', '0.97', '0.97'], 'recall': ['0.99', '0.89', '', '0.94', '0.97'],
+        'f1-score': ['0.98', '0.92', '0.97', '0.95', '0.97'], 'support': ['356981', '101279', '458260', '458260', '458260']
     })
     df_teste_dt = pd.DataFrame({
         'Classe / Métrica': ['Fluxo Normal (0)', 'Gargalo (1)', 'accuracy', 'macro avg', 'weighted avg'],
-        'precision': ['0.92', '0.77', '', '0.85', '0.89'], 'recall': ['0.94', '0.72', '', '0.83', '0.89'],
-        'f1-score': ['0.93', '0.74', '0.89', '0.84', '0.89'], 'support': ['89353', '25213', '114566', '114566', '114566']
+        'precision': ['0.92', '0.75', '', '0.83', '0.88'], 'recall': ['0.93', '0.70', '', '0.82', '0.88'],
+        'f1-score': ['0.93', '0.72', '0.88', '0.82', '0.88'], 'support': ['89353', '25213', '114566', '114566', '114566']
     })
+
     df_treino_rf = pd.DataFrame({
         'Classe / Métrica': ['Fluxo Normal (0)', 'Gargalo (1)', 'accuracy', 'macro avg', 'weighted avg'],
-        'precision': ['0.95', '0.83', '', '0.89', '0.92'], 'recall': ['0.95', '0.81', '', '0.88', '0.92'],
-        'f1-score': ['0.95', '0.82', '0.92', '0.89', '0.92'], 'support': ['356981', '101279', '458260', '458260', '458260']
+        'precision': ['0.98', '0.93', '', '0.95', '0.97'], 'recall': ['0.98', '0.92', '', '0.95', '0.97'],
+        'f1-score': ['0.98', '0.93', '0.97', '0.95', '0.97'], 'support': ['356981', '101279', '458260', '458260', '458260']
     })
     df_teste_rf = pd.DataFrame({
         'Classe / Métrica': ['Fluxo Normal (0)', 'Gargalo (1)', 'accuracy', 'macro avg', 'weighted avg'],
         'precision': ['0.93', '0.76', '', '0.85', '0.89'], 'recall': ['0.93', '0.75', '', '0.84', '0.89'],
-        'f1-score': ['0.93', '0.76', '0.89', '0.84', '0.89'], 'support': ['89353', '25213', '114566', '114566', '114566']
+        'f1-score': ['0.93', '0.76', '0.89', '0.85', '0.89'], 'support': ['89353', '25213', '114566', '114566', '114566']
     })
+    
     df_treino_xgb = pd.DataFrame({
         'Classe / Métrica': ['Fluxo Normal (0)', 'Gargalo (1)', 'accuracy', 'macro avg', 'weighted avg'],
-        'precision': ['0.94', '0.78', '', '0.86', '0.90'], 'recall': ['0.94', '0.78', '', '0.86', '0.90'],
+        'precision': ['0.94', '0.78', '', '0.86', '0.90'], 'recall': ['0.94', '0.79', '', '0.86', '0.90'],
         'f1-score': ['0.94', '0.78', '0.90', '0.86', '0.90'], 'support': ['356981', '101279', '458260', '458260', '458260']
     })
     df_teste_xgb = pd.DataFrame({
         'Classe / Métrica': ['Fluxo Normal (0)', 'Gargalo (1)', 'accuracy', 'macro avg', 'weighted avg'],
-        'precision': ['0.94', '0.77', '', '0.86', '0.90'], 'recall': ['0.94', '0.78', '', '0.86', '0.90'],
+        'precision': ['0.94', '0.77', '', '0.86', '0.90'], 'recall': ['0.93', '0.78', '', '0.86', '0.90'],
         'f1-score': ['0.94', '0.78', '0.90', '0.86', '0.90'], 'support': ['89353', '25213', '114566', '114566', '114566']
     })
     df_treino_lr = pd.DataFrame({
@@ -72,9 +74,9 @@ def render_ml1():
     # --- DATAFRAME DE COMPARAÇÃO FINAL DE TESTE ---
     df_comparacao = pd.DataFrame({
         'Métrica (Base de Teste)': ['Acurácia Geral', 'Precisão (Classe Gargalo)', 'Recall (Classe Gargalo)', 'F1-Score (Classe Gargalo)'],
-        'Árvore de Decisão': ['89.11%', '**0.77**', '0.72', '0.74'],
-        'Random Forest': ['89.40%', '0.76', '0.75', '0.76'],
-        'XGBoost': ['**90.17%**', '**0.77**', '**0.78**', '**0.78**'],
+        'Árvore de Decisão': ['88.24%', '0.75', '0.70', '0.72'],
+        'Random Forest': ['89.42%', '0.76', '0.75', '0.76'],
+        'XGBoost': ['**90.16%**', '**0.77**', '**0.78**', '**0.78**'],
         'Regressão Logística': ['77.99%', '0.00', '0.00', '0.00']
     })
 
@@ -83,7 +85,7 @@ def render_ml1():
         html.P("Análise comparativa detalhada do pipeline de modelagem preditiva aplicado aos gargalos operacionais.", className="text-secondary mb-4"),
         
         # ==========================================
-        # NOVO: PROPÓSITO DO MODELO (ML1)
+        # PROPÓSITO DO MODELO (ML1)
         # ==========================================
         dbc.Card([
             dbc.CardHeader(html.H5("Justificativa e Propósito do Modelo de Classificação", className="mb-0 fw-bold text-white"), className="bg-primary"),
@@ -99,7 +101,7 @@ def render_ml1():
         ], className="shadow border-0 mb-4 border-start border-primary border-5"),
 
         # ==========================================
-        # SEÇÃO: GLOSSÁRIO DE ÍNDICES MÉRICOS
+        # SEÇÃO: GLOSSÁRIO DE ÍNDICES METRICOS
         # ==========================================
         dbc.Card([
             dbc.CardHeader(html.H6("Glossário Metodológico de Avaliação Científica", className="mb-0 fw-bold")),
@@ -120,10 +122,10 @@ def render_ml1():
             dbc.CardBody([
                 html.P("O algoritmo mapeia decisões como um fluxograma de regras lógicas consecutivas (Se/Então), dividindo os dados sequencialmente com base em atributos temporais e espaciais até alcançar a classificação final de cada chamado urbano.", className="text-muted small fst-italic mb-4"),
                 dbc.Row([
-                    dbc.Col([html.H6("Acurácia Treino: 92.25%", className="fw-bold mb-2 small text-muted", style={'fontFamily': 'monospace'}), gerar_tabela_terminal(df_treino_dt)], width=12, lg=6, className="mb-3 mb-lg-0"),
-                    dbc.Col([html.H6("Acurácia Teste: 89.11%", className="fw-bold mb-2 small text-muted", style={'fontFamily': 'monospace'}), gerar_tabela_terminal(df_teste_dt)], width=12, lg=6),
+                    dbc.Col([html.H6("Acurácia Treino: 96.71%", className="fw-bold mb-2 small text-muted", style={'fontFamily': 'monospace'}), gerar_tabela_terminal(df_treino_dt)], width=12, lg=6, className="mb-3 mb-lg-0"),
+                    dbc.Col([html.H6("Acurácia Teste: 88.24%", className="fw-bold mb-2 small text-muted", style={'fontFamily': 'monospace'}), gerar_tabela_terminal(df_teste_dt)], width=12, lg=6),
                 ]),
-                html.Div("Aviso — Overfitting Evidente: O modelo tendeu a memorizar excessivamente a estrutura interna da base de treino. Ao deparar-se com novos dados da base de teste, a capacidade de rastreamento do gargalo (Recall) decaiu severamente de 0.79 para 0.72.", className="mt-3 text-warning fw-bold small"),
+                html.Div("Overfitting Evidente: Com a adição das novas variáveis preditivas, o modelo tendeu a memorizar excessivamente a estrutura interna da base de treino (atingindo 96.71% de acurácia). Ao deparar-se com novos dados da base de teste, a capacidade de rastreamento do gargalo (Recall) decaiu severamente de 0.89 para 0.70.", className="mt-3 text-warning fw-bold small"),
                 html.Hr(className="my-4"),
                 dbc.Row([
                     dbc.Col([html.Img(src='/assets/ML1/shap_arvore_de_decisao_bar.png', className='img-fluid shadow-sm rounded border')], width=12, md=6, className="mb-3 mb-md-0"),
@@ -138,10 +140,10 @@ def render_ml1():
             dbc.CardBody([
                 html.P("Estrutura um comitê combinando centenas de Árvores de Decisão independentes criadas sob amostragem aleatória de dados e variáveis (Bagging), definindo o diagnóstico preditivo final através de uma votação de maioria absoluta.", className="text-muted small fst-italic mb-4"),
                 dbc.Row([
-                    dbc.Col([html.H6("Acurácia Treino: 92.25%", className="fw-bold mb-2 small text-muted", style={'fontFamily': 'monospace'}), gerar_tabela_terminal(df_treino_rf)], width=12, lg=6, className="mb-3 mb-lg-0"),
-                    dbc.Col([html.H6("Acurácia Teste: 89.40%", className="fw-bold mb-2 small text-muted", style={'fontFamily': 'monospace'}), gerar_tabela_terminal(df_teste_rf)], width=12, lg=6),
+                    dbc.Col([html.H6("Acurácia Treino: 96.71%", className="fw-bold mb-2 small text-muted", style={'fontFamily': 'monospace'}), gerar_tabela_terminal(df_treino_rf)], width=12, lg=6, className="mb-3 mb-lg-0"),
+                    dbc.Col([html.H6("Acurácia Teste: 89.42%", className="fw-bold mb-2 small text-muted", style={'fontFamily': 'monospace'}), gerar_tabela_terminal(df_teste_rf)], width=12, lg=6),
                 ]),
-                html.Div("Nota — Estabilização Operacional: A criação do conjunto paralelo de árvores mitigou a instabilidade inerente à árvore simples, promovendo um ganho de consistência e elevando o F1-Score do gargalo para 0.76 na base de testes.", className="mt-3 text-primary fw-bold small"),
+                html.Div("Estabilização Operacional: A criação do conjunto paralelo de árvores mitigou a instabilidade inerente à árvore simples, promovendo um ganho de consistência e elevando o F1-Score do gargalo para 0.76 na base de testes, mesmo sofrendo uma queda da acurácia de treino (96.71%) para a de teste (89.42%).", className="mt-3 text-primary fw-bold small"),
                 html.Hr(className="my-4"),
                 dbc.Row([
                     dbc.Col([html.Img(src='/assets/ML1/shap_random_forest_bar.png', className='img-fluid shadow-sm rounded border')], width=12, md=6, className="mb-3 mb-md-0"),
@@ -156,10 +158,10 @@ def render_ml1():
             dbc.CardBody([
                 html.P("Algoritmo de aprendizado sequencial avançado (Boosting) em que cada árvore é construída consecutivamente com foco explícito em corrigir os resíduos matemáticos e erros cometidos pelas árvores anteriores.", className="text-muted small fst-italic mb-4"),
                 dbc.Row([
-                    dbc.Col([html.H6("Acurácia Treino: 90.34%", className="fw-bold mb-2 small text-muted", style={'fontFamily': 'monospace'}), gerar_tabela_terminal(df_treino_xgb)], width=12, lg=6, className="mb-3 mb-lg-0"),
-                    dbc.Col([html.H6("Acurácia Teste: 90.17%", className="fw-bold mb-2 small text-muted", style={'fontFamily': 'monospace'}), gerar_tabela_terminal(df_teste_xgb)], width=12, lg=6),
+                    dbc.Col([html.H6("Acurácia Treino: 90.46%", className="fw-bold mb-2 small text-muted", style={'fontFamily': 'monospace'}), gerar_tabela_terminal(df_treino_xgb)], width=12, lg=6, className="mb-3 mb-lg-0"),
+                    dbc.Col([html.H6("Acurácia Teste: 90.16%", className="fw-bold mb-2 small text-muted", style={'fontFamily': 'monospace'}), gerar_tabela_terminal(df_teste_xgb)], width=12, lg=6),
                 ]),
-                html.Div("Destaque — Generalização Preditiva Superior: Ao regularizar os gradientes sequenciais, o XGBoost abriu mão de superajustar a base de treino em prol de máxima estabilidade. Apresentou a menor variação do estudo (apenas 0.17% de queda entre treino e teste), consolidando os melhores índices práticos.", className="mt-3 text-success fw-bold small"),
+                html.Div("Generalização Preditiva Superior: Ao regularizar os gradientes sequenciais, o XGBoost abriu mão de superajustar a base de treino em prol de máxima estabilidade. Apresentou a menor variação do estudo (apenas 0.30% de queda, de 90.46% para 90.16%), consolidando os melhores índices práticos do estudo.", className="mt-3 text-success fw-bold small"),
                 html.Hr(className="my-4"),
                 dbc.Row([
                     dbc.Col([html.Img(src='/assets/ML1/shap_xgboost_bar.png', className='img-fluid shadow-sm rounded border'), html.P("Importância Consolidada: O Serviço se mantém como pilar absoluto, mas as amarras do gradiente equalizaram as micro-decisões do modelo.", className="text-muted small mt-2 text-center fst-italic")], width=12, md=6, className="mb-3 mb-md-0"),
@@ -185,7 +187,7 @@ def render_ml1():
                 ),
                 html.Div([
                     html.Strong("Fundamentação Científica da Escolha do Modelo: ", className="text-dark d-block mb-2 fs-5"),
-                    "A análise quantitativa unificada na matriz de auditoria estabelece o ", html.Strong("XGBoost"), " como a escolha ideal para o motor preditivo do ecossistema. Ele conquistou soberania estatística ao cravar a maior Acurácia Geral (**90.17%**), o maior Recall (**0.78**) e o maior F1-Score (**0.78**) da classe crítica de gargalos, empatando no topo da Precisão teórica. Esse comportamento numérico comprova a eficácia das penalizações matemáticas por regularização embutidas em sua arquitetura de boosting, blindando o algoritmo contra as flutuações e ruídos temporais da zeladoria municipal."
+                    "A análise quantitativa unificada na matriz de auditoria estabelece o ", html.Strong("XGBoost"), " como a escolha ideal para o motor preditivo do ecossistema. Ele conquistou soberania estatística ao cravar a maior Acurácia Geral (**90.16%**), o maior Recall (**0.78**) e o maior F1-Score (**0.78**) da classe crítica de gargalos, empatando no topo da Precisão teórica. Esse comportamento numérico comprova a eficácia das penalizações matemáticas por regularização embutidas em sua arquitetura de boosting, blindando o algoritmo contra as flutuações e ruídos temporais da zeladoria municipal."
                 ], className="mt-4 p-4 bg-white rounded border border-primary border-3 small text-muted")
             ])
         ], className="shadow border-0 mb-5"),
@@ -212,7 +214,7 @@ def render_ml1():
                     html.H5("Diagnóstico de Inviabilidade Metodológica (Modelo Linear):", className="fw-bold mb-3 text-info"),
                     html.P([
                         html.Strong("Evidência de Colapso nos Gráficos SHAP: "),
-                        "O gráfico de barras do SHAP escancara a incapacidade do classificador linear ao atribuir um peso médio inexpressivo de apenas +0.12 ao Serviço e quase zero ao Bairro. A comprovação geométrica definitiva da quebra do algoritmo está no gráfico Enxame de Abelhas (Beeswarm): as variáveis falham em segregar os chamados, resultando em uma nuvem caótica onde pontos azuis (valores baixos) e vermelhos (valores altos) acumulam-se em sobreposição total sobre o eixo neutro. Em algoritmos maduros, as cores se separam nitidamente para os extremos laterais. Essa mistura caótica atesta visualmente que o modelo é cego para correlações de infraestrutura."
+                        "O gráfico de barras do SHAP escancara a incapacidade do classificador linear ao atribuir um peso médio inexpressivo às variáveis principais. A comprovação geométrica definitiva da quebra do algoritmo está no gráfico Enxame de Abelhas (Beeswarm): as variáveis falham em segregar os chamados, resultando em uma nuvem caótica onde valores baixos e valores altos acumulam-se em sobreposição total sobre o eixo neutro. Em algoritmos maduros, as cores se separam nitidamente para os extremos laterais. Essa mistura caótica atesta visualmente que o modelo é cego para correlações de infraestrutura."
                     ], className="small mb-3"),
                     html.P([
                         html.Strong("Por que a reta estatística falha no contexto da Cidade? "),

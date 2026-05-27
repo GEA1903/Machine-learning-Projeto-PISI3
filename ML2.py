@@ -33,18 +33,29 @@ df_kdd['Bairro_ID'] = encoder_bairro_ml2.fit_transform(df_kdd['BAIRRO'])
 df_kdd['Servico_ID'] = encoder_servico_ml2.fit_transform(df_kdd['GRUPOSERVICO_DESCRICAO'])
 
 # ==========================================
-# ETAPA 4: DATA MINING E AVALIAÇÃO DETALHADA
+# ETAPA 4: FEATURE ENGINEERING E DATA MINING
 # ==========================================
-print("[3/3] Etapa de Data Mining (Treinando as IAs)...")
+print("[3/3] Engenharia de Atributos e Treinamento...")
 
-# Renomeando colunas para a formatação correta nos gráficos SHAP
-X = df_kdd[['Mes', 'Ano', 'Dia_Semana', 'Bairro_ID', 'Servico_ID']].rename(
-    columns={'Dia_Semana': 'Dia da Semana', 'Bairro_ID': 'Bairro', 'Servico_ID': 'Serviço', 'Mes': 'Mês'}
+df_kdd['DATA_DEMANDA'] = pd.to_datetime(df_kdd['DATA_DEMANDA'], errors='coerce')
+df_kdd = df_kdd.dropna(subset=['DATA_DEMANDA'])
+
+df_kdd['Ano'] = df_kdd['DATA_DEMANDA'].dt.year
+df_kdd['Mes'] = df_kdd['DATA_DEMANDA'].dt.month
+df_kdd['Dia_do_Mes'] = df_kdd['DATA_DEMANDA'].dt.day
+df_kdd['Dia_da_Semana'] = df_kdd['DATA_DEMANDA'].dt.dayofweek
+df_kdd['Trimestre'] = df_kdd['DATA_DEMANDA'].dt.quarter
+df_kdd['Semana_do_Ano'] = df_kdd['DATA_DEMANDA'].dt.isocalendar().week.astype(int)
+df_kdd['Estacao_Chuva'] = df_kdd['Mes'].apply(lambda x: 1 if x in [4, 5, 6, 7, 8] else 0)
+
+# 9 Variáveis Robustas!
+X = df_kdd[['Ano', 'Mes', 'Dia_do_Mes', 'Dia_da_Semana', 'Trimestre', 'Semana_do_Ano', 'Estacao_Chuva', 'Bairro_ID', 'Servico_ID']].rename(
+    columns={'Dia_da_Semana': 'Dia da Semana', 'Dia_do_Mes': 'Dia do Mês', 'Semana_do_Ano': 'Semana do Ano', 'Estacao_Chuva': 'Temporada de Chuva', 'Bairro_ID': 'Bairro', 'Servico_ID': 'Serviço'}
 )
 y = df_kdd['Dias_Resolucao']
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-print(f" -> Ensinando as IAs com {len(X_train)} registros...\n")
+print(f" -> Ensinando as IAs com {len(X_train)} registros e {X.shape[1]} variáveis...\n")
 
 # Modelos concorrentes, preservando a calibração original do seu Random Forest
 modelos_regressao = {
@@ -83,11 +94,11 @@ for nome, modelo in modelos_regressao.items():
 # ==========================================
 # ETAPA 5: EXPORTAÇÃO DO MODELO VENCEDOR
 # ==========================================
-print("Salvando o Random Forest Regressor e os encoders para o ecossistema do App...")
+print("Salvando o Random Forest Regressor e os encoders...")
 modelo_vencedor_ml2 = modelos_treinados['Random Forest Regressor']
-joblib.dump(modelo_vencedor_ml2, 'modelo_prazo_ml2.pkl', compress=3)
-joblib.dump(encoder_bairro_ml2, 'encoder_bairro_ml2.pkl')
-joblib.dump(encoder_servico_ml2, 'encoder_servico_ml2.pkl')
+joblib.dump(modelo_vencedor_ml2, 'modelo_prazo_ml2.pkl', compress=3) 
+joblib.dump(encoder_bairro_ml2, 'encoder_bairro_ml2.pkl', compress=3)
+joblib.dump(encoder_servico_ml2, 'encoder_servico_ml2.pkl', compress=3)
 
 # ==========================================
 # ETAPA 6: EXPLICABILIDADE CIENTÍFICA COM SHAP (REGRESSÃO)

@@ -46,12 +46,12 @@ def render_simulador(df_geral):
                         ]),
                         dbc.Row([
                             dbc.Col([
-                                html.Label("Mês do Ano:", className="fw-bold text-secondary small"),
-                                dcc.Dropdown(id='sim-mes', options=meses_opcoes, placeholder="Mês", className="mb-3 shadow-sm")
+                                html.Label("Dia do Mês:", className="fw-bold text-secondary small"),
+                                dbc.Input(id='sim-dia', type='number', value=15, min=1, max=31, className="mb-3 shadow-sm")
                             ], md=4),
                             dbc.Col([
-                                html.Label("Dia da Semana:", className="fw-bold text-secondary small"),
-                                dcc.Dropdown(id='sim-dia-semana', options=dias_semana_opcoes, placeholder="Dia", className="mb-3 shadow-sm")
+                                html.Label("Mês do Ano:", className="fw-bold text-secondary small"),
+                                dcc.Dropdown(id='sim-mes', options=meses_opcoes, placeholder="Mês", className="mb-3 shadow-sm")
                             ], md=4),
                             dbc.Col([
                                 html.Label("Ano Comercial:", className="fw-bold text-secondary small"),

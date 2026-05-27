@@ -324,16 +324,27 @@ def render_grafico_personalizado(botoes_clicks, bairros_selecionados, servicos_s
     Output('resultado-simulacao', 'children'),
     Input('btn-simular', 'n_clicks'),
     State('sim-bairro', 'value'), State('sim-servico', 'value'),
-    State('sim-mes', 'value'), State('sim-dia-semana', 'value'), State('sim-ano', 'value')
+    State('sim-ano', 'value'), State('sim-mes', 'value'), State('sim-dia', 'value')
 )
-def rodar_simulacao(n_clicks, bairro, servico, mes, dia_semana, ano):
+def rodar_simulacao(n_clicks, bairro, servico, ano, mes, dia):
     if not n_clicks:
         raise PreventUpdate
         
-    if not all([bairro, servico, mes is not None, dia_semana is not None, ano]):
-        return dbc.Alert("Preencha todos os campos do formulário para o processamento.", color="warning")
+    if not all([bairro, servico, ano is not None, mes is not None, dia is not None]):
+        return dbc.Alert(" Preencha todos os campos do formulário para o processamento.", color="warning")
         
     try:
+        try:
+            data_simulada = pd.Timestamp(year=ano, month=mes, day=dia)
+        except ValueError:
+            return dbc.Alert(" Data inválida. Verifique se o dia existe no mês selecionado (ex: Fevereiro não tem dia 30).", color="warning")
+
+        # FEATURE ENGINEERING INTELIGENTE
+        dia_semana = data_simulada.dayofweek
+        trimestre = data_simulada.quarter
+        semana_ano = data_simulada.isocalendar().week
+        estacao_chuva = 1 if mes in [4, 5, 6, 7, 8] else 0 # Chove em Recife?
+
         DIRETORIO_ATUAL = os.path.dirname(os.path.abspath(__file__))
         
         encoder_bairro_ml1 = joblib.load(os.path.join(DIRETORIO_ATUAL, '../encoder_bairro_ml1.pkl'))
@@ -348,20 +359,20 @@ def rodar_simulacao(n_clicks, bairro, servico, mes, dia_semana, ano):
             bairro_id_ml1 = encoder_bairro_ml1.transform([bairro])[0]
             servico_id_ml1 = encoder_servico_ml1.transform([servico])[0]
         except ValueError:
-            return dbc.Alert(f"Atenção: A combinação {bairro} / {servico} não possui dados históricos suficientes (ML1).", color="danger")
+            return dbc.Alert(f"Atenção: A combinação {bairro} / {servico} não possui histórico suficiente (ML1).", color="danger")
             
-        X_ml1 = pd.DataFrame([[mes, dia_semana, bairro_id_ml1, servico_id_ml1]], 
-                             columns=['Mes', 'Dia da Semana', 'Bairro', 'Serviço'])
+        X_ml1 = pd.DataFrame([[mes, dia, dia_semana, trimestre, semana_ano, estacao_chuva, bairro_id_ml1, servico_id_ml1]], 
+                             columns=['Mes', 'Dia do Mês', 'Dia da Semana', 'Trimestre', 'Semana do Ano', 'Temporada de Chuva', 'Bairro', 'Serviço'])
         pred_gargalo = modelo_ml1.predict(X_ml1)[0]
         
         try:
             bairro_id_ml2 = encoder_bairro_ml2.transform([bairro])[0]
             servico_id_ml2 = encoder_servico_ml2.transform([servico])[0]
         except ValueError:
-            return dbc.Alert(f"Atenção: A combinação {bairro} / {servico} não possui dados históricos suficientes (ML2).", color="danger")
+            return dbc.Alert(f"Atenção: A combinação {bairro} / {servico} não possui histórico suficiente (ML2).", color="danger")
             
-        X_ml2 = pd.DataFrame([[mes, ano, dia_semana, bairro_id_ml2, servico_id_ml2]], 
-                             columns=['Mês', 'Ano', 'Dia da Semana', 'Bairro', 'Serviço'])
+        X_ml2 = pd.DataFrame([[ano, mes, dia, dia_semana, trimestre, semana_ano, estacao_chuva, bairro_id_ml2, servico_id_ml2]], 
+                             columns=['Ano', 'Mes', 'Dia do Mês', 'Dia da Semana', 'Trimestre', 'Semana do Ano', 'Temporada de Chuva', 'Bairro', 'Serviço'])
         pred_prazo = modelo_ml2.predict(X_ml2)[0]
         
         if pred_gargalo == 1:
@@ -370,7 +381,7 @@ def rodar_simulacao(n_clicks, bairro, servico, mes, dia_semana, ano):
                     html.I(className="fa-solid fa-triangle-exclamation fa-2x text-danger me-3"),
                     html.H5("Atenção ao Status da Denúncia", className="fw-bold text-danger mb-0")
                 ], className="d-flex align-items-center mb-3"),
-                html.P("Analisamos os parâmetros da sua solicitação. Identificamos que este tipo de problema, nas condições atuais da cidade, possui um alto risco de retenção logística (Gargalo). Isso significa que a resolução é complexa e exigirá um esforço estrutural maior por parte das nossas equipes.", className="text-muted small mb-0")
+                html.P("Analisamos os parâmetros estruturais da sua solicitação. Identificamos que este tipo de problema, sob estas condições climáticas e período do ano, possui um alto risco de retenção logística (Gargalo). Isso significa que a resolução é complexa e exigirá esforço coordenado.", className="text-muted small mb-0")
             ], className="p-4 bg-white rounded-4 shadow-sm border-start border-danger border-5 mb-4")
         else:
             alerta_classificacao = html.Div([
@@ -378,7 +389,7 @@ def rodar_simulacao(n_clicks, bairro, servico, mes, dia_semana, ano):
                     html.I(className="fa-solid fa-circle-check fa-2x text-success me-3"),
                     html.H5("Fluxo Normal Confirmado", className="fw-bold text-success mb-0")
                 ], className="d-flex align-items-center mb-3"),
-                html.P("Tudo certo com a sua denúncia! Nossa IA analisou o cenário e não encontrou indícios de atrasos crônicos. O serviço fluirá naturalmente dentro do cronograma e da malha de atendimento da zeladoria municipal.", className="text-muted small mb-0")
+                html.P("  Tudo certo com a sua denúncia! Nossa IA analisou o cenário meteorológico e temporal e não encontrou indícios de atrasos crônicos. O serviço fluirá naturalmente dentro da malha de atendimento da zeladoria municipal.", className="text-muted small mb-0")
             ], className="p-4 bg-white rounded-4 shadow-sm border-start border-success border-5 mb-4")
             
         card_prazo = html.Div([
@@ -388,8 +399,8 @@ def rodar_simulacao(n_clicks, bairro, servico, mes, dia_semana, ano):
             ),
             html.H1(f"{pred_prazo:.1f} Dias", className="text-primary fw-bold display-4 mb-3"),
             html.P(
-                "Este SLA foi gerado automaticamente baseando-se no histórico matemático de eficiência do município. "
-                "A previsão blinda os servidores de estimativas subjetivas e garante total transparência para a sua solicitação.",
+                "Este SLA preditivo foi calculado cruzando variáveis meteorológicas e histórico logístico do bairro. "
+                "A estimativa algorítmica substitui a dependência de prazos manuais genéricos.",
                 className="text-muted small mb-0"
             )
         ], className="p-4 bg-white rounded-4 shadow-sm border border-primary border-2 text-center")

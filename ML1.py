@@ -33,18 +33,29 @@ df_kdd['Bairro_ID'] = encoder_bairro.fit_transform(df_kdd['BAIRRO'])
 df_kdd['Servico_ID'] = encoder_servico.fit_transform(df_kdd['GRUPOSERVICO_DESCRICAO'])
 
 # ==========================================
-# ETAPA 4: DATA MINING E AVALIAÇÃO DETALHADA
+# ETAPA 4: FEATURE ENGINEERING E DATA MINING
 # ==========================================
-print("[3/3] Etapa de Data Mining (Treinando as IAs)...")
+print("[3/3] Engenharia de Atributos e Treinamento...")
 
-# Renomeando as colunas para que o SHAP as leia com a formatação bonita nos gráficos
-X = df_kdd[['Mes', 'Dia_Semana_Num', 'Bairro_ID', 'Servico_ID']].rename(
-    columns={'Dia_Semana_Num': 'Dia da Semana', 'Bairro_ID': 'Bairro', 'Servico_ID': 'Serviço'}
+df_kdd['DATA_DEMANDA'] = pd.to_datetime(df_kdd['DATA_DEMANDA'], errors='coerce')
+df_kdd = df_kdd.dropna(subset=['DATA_DEMANDA'])
+
+# Criando as novas variáveis (Feature Engineering de Alto Nível)
+df_kdd['Mes'] = df_kdd['DATA_DEMANDA'].dt.month
+df_kdd['Dia_do_Mes'] = df_kdd['DATA_DEMANDA'].dt.day
+df_kdd['Dia_da_Semana'] = df_kdd['DATA_DEMANDA'].dt.dayofweek
+df_kdd['Trimestre'] = df_kdd['DATA_DEMANDA'].dt.quarter
+df_kdd['Semana_do_Ano'] = df_kdd['DATA_DEMANDA'].dt.isocalendar().week.astype(int)
+df_kdd['Estacao_Chuva'] = df_kdd['Mes'].apply(lambda x: 1 if x in [4, 5, 6, 7, 8] else 0) # Chuvas em Recife
+
+# 8 Variáveis Robustas e sem redundância!
+X = df_kdd[['Mes', 'Dia_do_Mes', 'Dia_da_Semana', 'Trimestre', 'Semana_do_Ano', 'Estacao_Chuva', 'Bairro_ID', 'Servico_ID']].rename(
+    columns={'Dia_da_Semana': 'Dia da Semana', 'Dia_do_Mes': 'Dia do Mês', 'Semana_do_Ano': 'Semana do Ano', 'Estacao_Chuva': 'Temporada de Chuva', 'Bairro_ID': 'Bairro', 'Servico_ID': 'Serviço'}
 )
 y = df_kdd['Alvo_Gargalo']
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-print(f" -> Ensinando as IAs com {len(X_train)} registros...\n")
+print(f" -> Ensinando as IAs com {len(X_train)} registros e {X.shape[1]} variáveis...\n")
 
 modelos = {
     'Random Forest': RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1),
@@ -91,9 +102,10 @@ joblib.dump(encoder_servico, 'encoder_servico_ml1.pkl')
 print("\n[Iniciando exportação dos gráficos SHAP para o Dashboard...]")
 import os
 
-os.makedirs('dashboard/assets', exist_ok=True)
+os.makedirs('dashboard/assets/ML1', exist_ok=True)
 
-X_shap = X_test.sample(n=250, random_state=42)
+# Reduzimos levemente a amostragem para evitar estouro de memória RAM e CPU
+X_shap = X_test.sample(n=150, random_state=42)
 X_bg = X_train.sample(n=100, random_state=42) 
 
 for nome, modelo in modelos_treinados.items():
@@ -101,8 +113,10 @@ for nome, modelo in modelos_treinados.items():
     
     if isinstance(modelo, (RandomForestClassifier, DecisionTreeClassifier, XGBClassifier)):
         explainer = shap.TreeExplainer(modelo)
-        shap_values_raw = explainer(X_shap)
-        shap_values_raw = explainer(X_shap)
+        
+        # O check_additivity=False impede que o SHAP trave tentando validar árvores infinitas
+        shap_values_raw = explainer(X_shap, check_additivity=False)
+        
         if len(shap_values_raw.shape) == 3:
             shap_values = shap_values_raw[:, :, 1]
         else:
@@ -121,7 +135,6 @@ for nome, modelo in modelos_treinados.items():
     shap.plots.bar(shap_values, show=False)
     plt.title(f"SHAP Importância de Atributos: {nome}", fontsize=12, pad=15)
     plt.tight_layout()
-    # Salva diretamente na subpasta do dashboard
     plt.savefig(f'dashboard/assets/ML1/shap_{nome_slug}_bar.png', dpi=150)
     plt.close() 
 
@@ -130,7 +143,6 @@ for nome, modelo in modelos_treinados.items():
     shap.plots.beeswarm(shap_values, show=False)
     plt.title(f"SHAP Enxame de Abelhas (Impacto): {nome}", fontsize=12, pad=15)
     plt.tight_layout()
-    # Salva diretamente na subpasta do dashboard
     plt.savefig(f'dashboard/assets/ML1/shap_{nome_slug}_beeswarm.png', dpi=150)
     plt.close()
 
