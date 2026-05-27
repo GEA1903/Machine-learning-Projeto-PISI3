@@ -175,13 +175,14 @@ def update_eda_graphs(botoes_clicks, click1, click2, n_reset):
 # ==========================================
 
 def abreviar_nome(nome):
-    """Regra: 3 letras para nomes simples. 2 de cada para nomes compostos."""
+    """Regra Nova: Nome simples (3 letras). Nome composto (1ª Letra . 1ª Letra)."""
     if not nome or nome == "LIMITE": return ""
     palavras = str(nome).replace("-", " ").split()
     if len(palavras) == 1:
         return palavras[0][:3].upper()
     else:
-        return palavras[0][:2].upper() + " " + palavras[1][:2].upper()
+        # Pega a primeira letra da primeira palavra e a primeira da segunda
+        return palavras[0][0].upper() + "." + palavras[1][0].upper()
 
 @app.callback(
     Output('bairro-badges', 'children'),
@@ -219,15 +220,21 @@ def toggle_caixa_servicos(modo):
 )
 def update_bairro_autocomplete(search_value, selecionados):
     if not search_value: search_value = ""
+    
     opcoes_atuais = [{'label': str(b), 'value': str(b)} for b in selecionados if b != "LIMITE"] if selecionados else []
-    if len(search_value) < 3: return opcoes_atuais
+    
     if selecionados and len(selecionados) >= 5:
         return opcoes_atuais + [{"label": "⚠️ Limite de 5 bairros atingido", "value": "LIMITE", "disabled": True}]
-    todos_bairros = df_geral['BAIRRO'].dropna().unique()
+        
+    # Sorted aplica ordem alfabética na base de bairros
+    todos_bairros = sorted(df_geral['BAIRRO'].dropna().unique())
     buscas_encontradas = [{'label': str(b), 'value': str(b)} for b in todos_bairros if search_value.upper() in str(b).upper()]
+    
     valores_atuais = [opt['value'] for opt in opcoes_atuais]
     resultado_final = opcoes_atuais + [b for b in buscas_encontradas if b['value'] not in valores_atuais]
-    return resultado_final[:15] 
+    
+    # Aumentado para 100 resultados renderizados (como não há mais limite de 3 letras, a lista será completa)
+    return resultado_final[:100] 
 
 @app.callback(
     Output("servico-autocomplete", "options"),
@@ -236,13 +243,16 @@ def update_bairro_autocomplete(search_value, selecionados):
 )
 def update_servico_autocomplete(search_value, selecionados):
     if not search_value: search_value = ""
+    
     opcoes_atuais = [{'label': str(s), 'value': str(s)} for s in selecionados] if selecionados else []
-    if len(search_value) < 2: return opcoes_atuais
-    todos_servicos = df_geral['GRUPOSERVICO_DESCRICAO'].dropna().unique()
+    
+    # Sorted aplica ordem alfabética na base de serviços
+    todos_servicos = sorted(df_geral['GRUPOSERVICO_DESCRICAO'].dropna().unique())
     buscas_encontradas = [{'label': str(s), 'value': str(s)} for s in todos_servicos if search_value.upper() in str(s).upper()]
+    
     valores_atuais = [opt['value'] for opt in opcoes_atuais]
     resultado_final = opcoes_atuais + [s for s in buscas_encontradas if s['value'] not in valores_atuais]
-    return resultado_final[:20] 
+    return resultado_final[:100] 
 
 @app.callback(
     Output('custom-top-chart', 'figure'),
