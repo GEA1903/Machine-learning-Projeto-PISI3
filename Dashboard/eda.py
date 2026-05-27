@@ -96,7 +96,7 @@ def render_eda(anos_reais, df_all=None):
         ], className="mb-4 shadow-sm border-0 bg-light"),
 
         # ==========================================
-        # GRÁFICO CUSTOMIZÁVEL (Layout em Containers Flutuantes)
+        # GRÁFICO CUSTOMIZÁVEL (Motor de BI Avançado)
         # ==========================================
         dbc.Card([
             dbc.CardHeader(html.H5("Motor de BI: Cruzamento e Auditoria sob Demanda", className="mb-0 fw-bold text-white"), className="bg-info"),
@@ -110,11 +110,10 @@ def render_eda(anos_reais, df_all=None):
                                 id='bairro-autocomplete',
                                 multi=True,
                                 searchable=True,
-                                placeholder="Buscar (Máx 5)...",
+                                placeholder="Selecionar bairros (Máx 5)...",
                                 options=[], 
                                 className="mb-2"
                             ),
-                            # Local onde os balõezinhos do bairro vão renderizar
                             html.Div(id='bairro-badges', className="d-flex flex-wrap gap-2 mt-3")
                         ], className="shadow rounded-4 p-4 bg-white border-0 h-100")
                     ], width=12, md=4, className="mb-4 mb-md-0"),
@@ -138,12 +137,11 @@ def render_eda(anos_reais, df_all=None):
                                 id='servico-autocomplete',
                                 multi=True,
                                 searchable=True,
-                                placeholder="Buscar denúncia...",
+                                placeholder="Selecionar denúncias...",
                                 options=[], 
                                 disabled=True,
                                 className="mb-2"
                             ),
-                            # Local onde os balõezinhos das denúncias vão renderizar
                             html.Div(id='servico-badges', className="d-flex flex-wrap gap-2 mt-3")
                         ], className="shadow rounded-4 p-4 bg-white border-0 h-100")
                     ], width=12, md=4, className="mb-4 mb-md-0"),
@@ -166,10 +164,10 @@ def render_eda(anos_reais, df_all=None):
                             )
                         ], className="shadow rounded-4 p-4 bg-white border-0 h-100")
                     ], width=12, md=4)
-                ], className="mb-5 mt-2"), # Espaçamento extra antes do gráfico
+                ], className="mb-5 mt-2"), 
                 
                 dcc.Graph(id='custom-top-chart', config={'displayModeBar': False})
-            ], className="bg-light") # Fundo cinza claro para destacar os containers brancos
+            ], className="bg-light") 
         ], className="shadow border-0 mb-5 border-start border-info border-5"),
 
         # --- OS 3 ATOS ---
