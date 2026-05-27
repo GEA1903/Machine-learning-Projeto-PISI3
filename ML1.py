@@ -77,13 +77,13 @@ for nome, modelo in modelos.items():
     print("\n")
 
 # ==========================================
-# ETAPA 5: EXPORTAÇÃO DO RANDOM FOREST PARA PRODUÇÃO
+# ETAPA 5: EXPORTAÇÃO DO XGBOOST PARA PRODUÇÃO
 # ==========================================
-print("Salvando o Random Forest e os tradutores para o backend do App...")
-modelo_rf = modelos_treinados['Random Forest']
-joblib.dump(modelo_rf, 'modelo_report_rf.pkl')
-joblib.dump(encoder_bairro, 'encoder_bairro.pkl')
-joblib.dump(encoder_servico, 'encoder_servico.pkl')
+print("Salvando o XGBoost e os tradutores para o backend do App...")
+modelo_xgb = modelos_treinados['XGBoost']
+joblib.dump(modelo_xgb, 'modelo_report_xgb.pkl')
+joblib.dump(encoder_bairro, 'encoder_bairro_ml1.pkl')
+joblib.dump(encoder_servico, 'encoder_servico_ml1.pkl')
 
 # ==========================================
 # ETAPA 6: EXPLICABILIDADE CIENTÍFICA COM SHAP (OS 3 ALGORITMOS)

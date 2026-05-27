@@ -5,6 +5,7 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 import plotly.express as px
 import os
+import joblib
 
 # IMPORTAÇÃO DOS NOSSOS MÓDULOS DE PÁGINAS
 from home import render_home
@@ -13,6 +14,7 @@ from correlacao import render_correlacao
 from ml1 import render_ml1
 from ml2 import render_ml2
 from cluster import render_cluster
+from simulador import render_simulador
 
 # ==========================================
 # 1. CARREGAMENTO E LIMPEZA DINÂMICA
@@ -67,7 +69,9 @@ navbar = dbc.NavbarSimple(
 
         dbc.DropdownMenu([
             dbc.DropdownMenuItem("Machine Learning 1", href="/ml1"),
-            dbc.DropdownMenuItem("Machine Learning 2", href="/ml2")
+            dbc.DropdownMenuItem("Machine Learning 2", href="/ml2"),
+            dbc.DropdownMenuItem(divider=True),
+            dbc.DropdownMenuItem("Simulador de IA", href="/simulador")
         ], label="Machine Learning", nav=True),
         dbc.NavItem(dbc.NavLink("Clusterização", href="/cluster")),
     ],
@@ -92,19 +96,17 @@ def navigate(path):
     if path == "/ml1": return render_ml1()
     if path == "/ml2": return render_ml2()
     if path == "/cluster": return render_cluster(df_geral)
+    if path == "/simulador": return render_simulador(df_geral)
     return render_home(total_registros)
 
 # ==========================================
-# 4. CALLBACK DO PIPELINE EDA (OS 3 ATOS)
+# 4. CALLBACK DO PIPELINE EDA E MOTOR BI
 # ==========================================
 @app.callback(
     [Output('ato-1', 'figure'), Output('ato-2', 'figure'), Output('ato-3', 'figure'),
-     Output({'type': 'btn-ano', 'index': ALL}, 'color'),
-     Output({'type': 'btn-ano', 'index': ALL}, 'outline')],
-    [Input({'type': 'btn-ano', 'index': ALL}, 'n_clicks'), 
-     Input('ato-1', 'clickData'), 
-     Input('ato-2', 'clickData'), 
-     Input('reset-eda', 'n_clicks')]
+     Output({'type': 'btn-ano', 'index': ALL}, 'color'), Output({'type': 'btn-ano', 'index': ALL}, 'outline')],
+    [Input({'type': 'btn-ano', 'index': ALL}, 'n_clicks'), Input('ato-1', 'clickData'), 
+     Input('ato-2', 'clickData'), Input('reset-eda', 'n_clicks')]
 )
 def update_eda_graphs(botoes_clicks, click1, click2, n_reset):
     ctx = callback_context
@@ -124,7 +126,7 @@ def update_eda_graphs(botoes_clicks, click1, click2, n_reset):
             outlines_botoes.append(True)
 
     if not anos_selecionados:
-        fig_aviso = px.bar(title="Selecione pelo menos um ano para renderizar os gráficos.")
+        fig_aviso = px.bar(title="Selecione pelo menos um ano.")
         return fig_aviso, fig_aviso, fig_aviso, cores_botoes, outlines_botoes
 
     if triggered_id == 'reset-eda':
@@ -148,10 +150,9 @@ def update_eda_graphs(botoes_clicks, click1, click2, n_reset):
     df_g = df_a2[df_a2['SITUACAO'].isin(status_g)]
     fila = df_g['BAIRRO'].value_counts().head(10).reset_index(name='Qtd')
     
-    fig2 = px.bar(fila, x='Qtd', y='BAIRRO', orientation='h', color='BAIRRO',
-                  color_discrete_sequence=OKABE_ITO,
+    fig2 = px.bar(fila, x='Qtd', y='BAIRRO', orientation='h', color='Qtd', color_continuous_scale='Oranges',
                   title=f"Ato 2: Onde a Fila Trava? ({servico or 'Geral'})", template='plotly_white')
-    fig2.update_layout(yaxis={'categoryorder':'total ascending'}, height=520, showlegend=False)
+    fig2.update_layout(yaxis={'categoryorder':'total ascending'}, height=520)
 
     bairros_f = [click2['points'][0]['y']] if click2 else fila.head(5)['BAIRRO'].tolist()
     df_f = df_a2[df_a2['BAIRRO'].isin(bairros_f)]
@@ -163,112 +164,67 @@ def update_eda_graphs(botoes_clicks, click1, click2, n_reset):
             T=('SITUACAO', 'count'), N=('SITUACAO', lambda x: x.isin(status_g).sum())).reset_index()
         m['Taxa'] = (m['N'] / m['T']) * 100
         fig3 = px.bar(m, x='BAIRRO', y='Taxa', color='GRUPOSERVICO_DESCRICAO', barmode='group', text_auto='.1f',
-                     title="Ato 3: Qual serviço é mais negligenciado nos bairros em crise? (Taxa de Ineficiência)", 
+                     title="Ato 3: Taxa de Ineficiência nos bairros críticos", 
                      color_discrete_sequence=OKABE_ITO, template='plotly_white')
         fig3.update_layout(yaxis_ticksuffix='%', height=520)
         fig3.update_traces(textposition='outside', textfont_size=11)
 
     return fig1, fig2, fig3, cores_botoes, outlines_botoes
 
-# ==========================================
-# 5. LÓGICA DO PAINEL CUSTOMIZÁVEL
-# ==========================================
-
 def abreviar_nome(nome):
-    """Regra Nova: Nome simples (3 letras). Nome composto (1ª Letra . 1ª Letra)."""
     if not nome or nome == "LIMITE": return ""
     palavras = str(nome).replace("-", " ").split()
     if len(palavras) == 1:
         return palavras[0][:3].upper()
     else:
-        # Pega a primeira letra da primeira palavra e a primeira da segunda
         return palavras[0][0].upper() + "." + palavras[1][0].upper()
 
-@app.callback(
-    Output('bairro-badges', 'children'),
-    Input('bairro-autocomplete', 'value')
-)
+@app.callback(Output('bairro-badges', 'children'), Input('bairro-autocomplete', 'value'))
 def render_bairro_badges(selecionados):
     if not selecionados: return []
-    return [
-        dbc.Badge(abreviar_nome(b), color="primary", className="px-3 py-2 rounded-pill shadow-sm fs-6") 
-        for b in selecionados if b != "LIMITE"
-    ]
+    return [dbc.Badge(abreviar_nome(b), color="primary", className="px-3 py-2 rounded-pill shadow-sm fs-6") for b in selecionados if b != "LIMITE"]
 
-@app.callback(
-    Output('servico-badges', 'children'),
-    Input('servico-autocomplete', 'value')
-)
+@app.callback(Output('servico-badges', 'children'), Input('servico-autocomplete', 'value'))
 def render_servico_badges(selecionados):
     if not selecionados: return []
-    return [
-        dbc.Badge(abreviar_nome(s), color="success", className="px-3 py-2 rounded-pill shadow-sm fs-6") 
-        for s in selecionados
-    ]
+    return [dbc.Badge(abreviar_nome(s), color="success", className="px-3 py-2 rounded-pill shadow-sm fs-6") for s in selecionados]
 
-@app.callback(
-    Output('servico-autocomplete', 'disabled'),
-    Input('modo-servico', 'value')
-)
+@app.callback(Output('servico-autocomplete', 'disabled'), Input('modo-servico', 'value'))
 def toggle_caixa_servicos(modo):
     return modo == 'todos'
 
-@app.callback(
-    Output("bairro-autocomplete", "options"),
-    Input("bairro-autocomplete", "search_value"),
-    State("bairro-autocomplete", "value")
-)
+@app.callback(Output("bairro-autocomplete", "options"), Input("bairro-autocomplete", "search_value"), State("bairro-autocomplete", "value"))
 def update_bairro_autocomplete(search_value, selecionados):
     if not search_value: search_value = ""
-    
     opcoes_atuais = [{'label': str(b), 'value': str(b)} for b in selecionados if b != "LIMITE"] if selecionados else []
-    
-    if selecionados and len(selecionados) >= 5:
-        return opcoes_atuais + [{"label": "⚠️ Limite de 5 bairros atingido", "value": "LIMITE", "disabled": True}]
-        
-    # Sorted aplica ordem alfabética na base de bairros
+    if selecionados and len(selecionados) >= 5: return opcoes_atuais + [{"label": "⚠️ Limite de 5 bairros atingido", "value": "LIMITE", "disabled": True}]
     todos_bairros = sorted(df_geral['BAIRRO'].dropna().unique())
     buscas_encontradas = [{'label': str(b), 'value': str(b)} for b in todos_bairros if search_value.upper() in str(b).upper()]
-    
     valores_atuais = [opt['value'] for opt in opcoes_atuais]
     resultado_final = opcoes_atuais + [b for b in buscas_encontradas if b['value'] not in valores_atuais]
-    
-    # Aumentado para 100 resultados renderizados (como não há mais limite de 3 letras, a lista será completa)
     return resultado_final[:100] 
 
-@app.callback(
-    Output("servico-autocomplete", "options"),
-    Input("servico-autocomplete", "search_value"),
-    State("servico-autocomplete", "value")
-)
+@app.callback(Output("servico-autocomplete", "options"), Input("servico-autocomplete", "search_value"), State("servico-autocomplete", "value"))
 def update_servico_autocomplete(search_value, selecionados):
     if not search_value: search_value = ""
-    
     opcoes_atuais = [{'label': str(s), 'value': str(s)} for s in selecionados] if selecionados else []
-    
-    # Sorted aplica ordem alfabética na base de serviços
     todos_servicos = sorted(df_geral['GRUPOSERVICO_DESCRICAO'].dropna().unique())
     buscas_encontradas = [{'label': str(s), 'value': str(s)} for s in todos_servicos if search_value.upper() in str(s).upper()]
-    
     valores_atuais = [opt['value'] for opt in opcoes_atuais]
     resultado_final = opcoes_atuais + [s for s in buscas_encontradas if s['value'] not in valores_atuais]
     return resultado_final[:100] 
 
 @app.callback(
     Output('custom-top-chart', 'figure'),
-    [Input({'type': 'btn-ano', 'index': ALL}, 'n_clicks'),
-     Input('bairro-autocomplete', 'value'),
-     Input('servico-autocomplete', 'value'),
-     Input('modo-servico', 'value'),
-     Input('metrica-analise', 'value')]
+    [Input({'type': 'btn-ano', 'index': ALL}, 'n_clicks'), Input('bairro-autocomplete', 'value'),
+     Input('servico-autocomplete', 'value'), Input('modo-servico', 'value'), Input('metrica-analise', 'value')]
 )
 def render_grafico_personalizado(botoes_clicks, bairros_selecionados, servicos_selecionados, modo_servico, metrica):
     anos_selecionados = [anos_reais[idx] for idx, qtd in enumerate(botoes_clicks) if (qtd % 2) != 0]
 
     if not bairros_selecionados or "LIMITE" in bairros_selecionados:
         bairros_selecionados = [b for b in (bairros_selecionados or []) if b != "LIMITE"]
-        if not bairros_selecionados:
-            return px.bar(title="Aguardando seleção... Escolha ao menos um bairro para gerar a análise.")
+        if not bairros_selecionados: return px.bar(title="Aguardando seleção de Bairro.")
 
     df_filtrado = df_geral[(df_geral['Ano'].isin(anos_selecionados)) & (df_geral['BAIRRO'].isin(bairros_selecionados))]
 
@@ -280,11 +236,9 @@ def render_grafico_personalizado(botoes_clicks, bairros_selecionados, servicos_s
 
     if df_filtrado.empty: return px.bar(title="Nenhum dado encontrado.")
 
-    # Engenharia de Dados 
     status_gargalo = ['PENDENTE', 'PREPARACAO', 'CADASTRADA']
     df_agrupado = df_filtrado.groupby(['Mes', 'BAIRRO']).agg(
-        Total=('SITUACAO', 'count'),
-        Pendentes=('SITUACAO', lambda x: x.isin(status_gargalo).sum()),
+        Total=('SITUACAO', 'count'), Pendentes=('SITUACAO', lambda x: x.isin(status_gargalo).sum()),
         Resolvidas=('SITUACAO', lambda x: (~x.isin(status_gargalo)).sum())
     ).reset_index()
 
@@ -295,51 +249,105 @@ def render_grafico_personalizado(botoes_clicks, bairros_selecionados, servicos_s
     OKABE_ITO = ['#0072B2', '#D55E00', '#009E73', '#E69F00', '#CC79A7']
     
     if metrica == 'total':
-        eixo_y = 'Total'
-        titulo = "Volume Absoluto de Ocorrências no Período"
-        y_title = "Quantidade Absoluta"
-        hover_template = '<b>%{fullData.name}</b><br>Mês: %{x}<br>Volume: %{y} queixas<extra></extra>'
-        custom_data = None
+        eixo_y, titulo, y_title, custom_data = 'Total', "Volume Absoluto de Ocorrências", "Quantidade", None
+        hover_template = '<b>%{fullData.name}</b><br>Mês: %{x}<br>Volume: %{y}<extra></extra>'
     elif metrica == 'resolvidas':
-        eixo_y = 'Resolvidas'
-        titulo = "Eficácia: Obras e Serviços Resolvidos"
-        y_title = "Demandas Resolvidas"
-        custom_data = ['Total', 'Perc_Resolvidas']
-        hover_template = '<b>%{fullData.name}</b><br>Mês: %{x}<br>Resolvidas: %{y}<br>Total: %{customdata[0]}<br>Sucesso: %{customdata[1]:.1f}%<extra></extra>'
+        eixo_y, titulo, y_title, custom_data = 'Resolvidas', "Eficácia: Obras e Serviços Resolvidos", "Resolvidas", ['Total', 'Perc_Resolvidas']
+        hover_template = '<b>%{fullData.name}</b><br>Mês: %{x}<br>Resolvidas: %{y}<br>Taxa Sucesso: %{customdata[1]:.1f}%<extra></extra>'
     elif metrica == 'pendentes':
-        eixo_y = 'Pendentes'
-        titulo = "O Gargalo Operacional: Serviços Pendentes/Atrasados"
-        y_title = "Demandas na Fila"
-        custom_data = ['Total', 'Perc_Pendentes']
-        hover_template = '<b>%{fullData.name}</b><br>Mês: %{x}<br>Pendentes: %{y}<br>Total: %{customdata[0]}<br>Taxa Crítica: %{customdata[1]:.1f}%<extra></extra>'
+        eixo_y, titulo, y_title, custom_data = 'Pendentes', "O Gargalo Operacional", "Pendentes", ['Total', 'Perc_Pendentes']
+        hover_template = '<b>%{fullData.name}</b><br>Mês: %{x}<br>Pendentes: %{y}<br>Taxa Crítica: %{customdata[1]:.1f}%<extra></extra>'
     elif metrica == 'iso':
-        eixo_y = 'ISO'
-        titulo = "Termômetro (ISO): Relação Problemas vs. Soluções"
-        y_title = "Índice ( > 1.0 = Perigo )"
-        hover_template = '<b>%{fullData.name}</b><br>Mês: %{x}<br>ISO: %{y:.2f}<br>(Nota: Acima de 1.0 a fila acumulou)<extra></extra>'
-        custom_data = None
+        eixo_y, titulo, y_title, custom_data = 'ISO', "Termômetro (ISO)", "Índice ( > 1.0 = Perigo )", None
+        hover_template = '<b>%{fullData.name}</b><br>Mês: %{x}<br>ISO: %{y:.2f}<extra></extra>'
 
-    fig = px.line(
-        df_agrupado, x='Mes', y=eixo_y, color='BAIRRO', markers=True,
-        title=titulo, template='plotly_white', custom_data=custom_data,
-        color_discrete_sequence=OKABE_ITO
-    )
-    
-    if metrica == 'iso':
-        fig.add_hline(y=1.0, line_dash="dash", line_color="red", opacity=0.5, annotation_text="Limite de Colapso (>1.0)")
-
+    fig = px.line(df_agrupado, x='Mes', y=eixo_y, color='BAIRRO', markers=True, title=titulo, template='plotly_white', custom_data=custom_data, color_discrete_sequence=OKABE_ITO)
+    if metrica == 'iso': fig.add_hline(y=1.0, line_dash="dash", line_color="red", opacity=0.5, annotation_text="Limite de Colapso (>1.0)")
     fig.update_traces(hovertemplate=hover_template)
-    
-    fig.update_layout(
-        xaxis=dict(tickmode='linear', tick0=1, dtick=1, title="Mês do Ano"),
-        yaxis_title=y_title, height=380, margin=dict(l=20, r=20, t=50, b=20),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, title="")
-    )
-    
+    fig.update_layout(xaxis=dict(tickmode='linear', tick0=1, dtick=1, title="Mês do Ano"), yaxis_title=y_title, height=380, margin=dict(l=20, r=20, t=50, b=20), legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, title=""))
     return fig
 
 # ==========================================
-# 6. EXECUÇÃO DO SERVIDOR
+# 6. CALLBACK DO SIMULADOR (DEPLOY DA IA)
 # ==========================================
+@app.callback(
+    Output('resultado-simulacao', 'children'),
+    Input('btn-simular', 'n_clicks'),
+    State('sim-bairro', 'value'), State('sim-servico', 'value'),
+    State('sim-mes', 'value'), State('sim-dia-semana', 'value'), State('sim-ano', 'value')
+)
+def rodar_simulacao(n_clicks, bairro, servico, mes, dia_semana, ano):
+    if not n_clicks:
+        raise PreventUpdate
+        
+    if not all([bairro, servico, mes is not None, dia_semana is not None, ano]):
+        return dbc.Alert("⚠️ Preencha todos os campos do formulário para o processamento.", color="warning")
+        
+    try:
+        DIRETORIO_ATUAL = os.path.dirname(os.path.abspath(__file__))
+        
+        encoder_bairro_ml1 = joblib.load(os.path.join(DIRETORIO_ATUAL, '../encoder_bairro_ml1.pkl'))
+        encoder_servico_ml1 = joblib.load(os.path.join(DIRETORIO_ATUAL, '../encoder_servico_ml1.pkl'))
+        modelo_ml1 = joblib.load(os.path.join(DIRETORIO_ATUAL, '../modelo_report_xgb.pkl'))
+        
+        encoder_bairro_ml2 = joblib.load(os.path.join(DIRETORIO_ATUAL, '../encoder_bairro_ml2.pkl'))
+        encoder_servico_ml2 = joblib.load(os.path.join(DIRETORIO_ATUAL, '../encoder_servico_ml2.pkl'))
+        modelo_ml2 = joblib.load(os.path.join(DIRETORIO_ATUAL, '../modelo_prazo_ml2.pkl'))
+        
+        try:
+            bairro_id_ml1 = encoder_bairro_ml1.transform([bairro])[0]
+            servico_id_ml1 = encoder_servico_ml1.transform([servico])[0]
+        except ValueError:
+            return dbc.Alert(f"Atenção: A combinação {bairro} / {servico} não possui dados históricos suficientes (ML1).", color="danger")
+            
+        X_ml1 = pd.DataFrame([[mes, dia_semana, bairro_id_ml1, servico_id_ml1]], 
+                             columns=['Mes', 'Dia da Semana', 'Bairro', 'Serviço'])
+        pred_gargalo = modelo_ml1.predict(X_ml1)[0]
+        
+        try:
+            bairro_id_ml2 = encoder_bairro_ml2.transform([bairro])[0]
+            servico_id_ml2 = encoder_servico_ml2.transform([servico])[0]
+        except ValueError:
+            return dbc.Alert(f"Atenção: A combinação {bairro} / {servico} não possui dados históricos suficientes (ML2).", color="danger")
+            
+        X_ml2 = pd.DataFrame([[mes, ano, dia_semana, bairro_id_ml2, servico_id_ml2]], 
+                             columns=['Mês', 'Ano', 'Dia da Semana', 'Bairro', 'Serviço'])
+        pred_prazo = modelo_ml2.predict(X_ml2)[0]
+        
+        if pred_gargalo == 1:
+            alerta_classificacao = html.Div([
+                html.Div([
+                    html.I(className="fa-solid fa-triangle-exclamation fa-2x text-danger me-3"),
+                    html.H5("Atenção ao Status da Denúncia", className="fw-bold text-danger mb-0")
+                ], className="d-flex align-items-center mb-3"),
+                html.P("Analisamos os parâmetros da sua solicitação. Identificamos que este tipo de problema, nas condições atuais da cidade, possui um alto risco de retenção logística (Gargalo). Isso significa que a resolução é complexa e exigirá um esforço estrutural maior por parte das nossas equipes.", className="text-muted small mb-0")
+            ], className="p-4 bg-white rounded-4 shadow-sm border-start border-danger border-5 mb-4")
+        else:
+            alerta_classificacao = html.Div([
+                html.Div([
+                    html.I(className="fa-solid fa-circle-check fa-2x text-success me-3"),
+                    html.H5("Fluxo Normal Confirmado", className="fw-bold text-success mb-0")
+                ], className="d-flex align-items-center mb-3"),
+                html.P("✅ Tudo certo com a sua denúncia! Nossa IA analisou o cenário e não encontrou indícios de atrasos crônicos. O serviço fluirá naturalmente dentro do cronograma e da malha de atendimento da zeladoria municipal.", className="text-muted small mb-0")
+            ], className="p-4 bg-white rounded-4 shadow-sm border-start border-success border-5 mb-4")
+            
+        card_prazo = html.Div([
+            html.H6(
+                [html.I(className="fa-regular fa-calendar-check me-2"), "Estimativa Científica de Resolução:"],
+                className="text-primary fw-bold text-uppercase mb-3"
+            ),
+            html.H1(f"{pred_prazo:.1f} Dias", className="text-primary fw-bold display-4 mb-3"),
+            html.P(
+                "Este SLA foi gerado automaticamente baseando-se no histórico matemático de eficiência do município. "
+                "A previsão blinda os servidores de estimativas subjetivas e garante total transparência para a sua solicitação.",
+                className="text-muted small mb-0"
+            )
+        ], className="p-4 bg-white rounded-4 shadow-sm border border-primary border-2 text-center")
+        
+        return html.Div([alerta_classificacao, card_prazo])
+        
+    except Exception as e:
+        return dbc.Alert(f"A aguardar sincronização dos ficheiros .pkl. Erro: {str(e)}", color="dark")
+
 if __name__ == "__main__":
     app.run(debug=True, port=8055)
