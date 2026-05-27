@@ -381,7 +381,7 @@ def rodar_simulacao(n_clicks, bairro, servico, ano, mes, dia):
                     html.I(className="fa-solid fa-triangle-exclamation fa-2x text-danger me-3"),
                     html.H5("Atenção ao Status da Denúncia", className="fw-bold text-danger mb-0")
                 ], className="d-flex align-items-center mb-3"),
-                html.P("Analisamos os parâmetros estruturais da sua solicitação. Identificamos que este tipo de problema, sob estas condições climáticas e período do ano, possui um alto risco de retenção logística (Gargalo). Isso significa que a resolução é complexa e exigirá esforço coordenado.", className="text-muted small mb-0")
+                html.P("Analisamos os parâmetros estruturais da sua solicitação. Identificamos que este tipo de problema, sob estas condições climáticas e período do ano, possui um alto risco de retenção logística (Gargalo). Isso significa que a resolução é complexa e exigirá um tempo acima do previsto.", className="text-muted small mb-0")
             ], className="p-4 bg-white rounded-4 shadow-sm border-start border-danger border-5 mb-4")
         else:
             alerta_classificacao = html.Div([
@@ -399,8 +399,8 @@ def rodar_simulacao(n_clicks, bairro, servico, ano, mes, dia):
             ),
             html.H1(f"{pred_prazo:.1f} Dias", className="text-primary fw-bold display-4 mb-3"),
             html.P(
-                "Este SLA preditivo foi calculado cruzando variáveis meteorológicas e histórico logístico do bairro. "
-                "A estimativa algorítmica substitui a dependência de prazos manuais genéricos.",
+                "Este ML preditivo foi calculado cruzando variáveis meteorológicas e histórico logístico do bairro. "
+                "Lembres-se, a estimativa não é perfeita, tendo uma margem de erro de ±4 dias.",
                 className="text-muted small mb-0"
             )
         ], className="p-4 bg-white rounded-4 shadow-sm border border-primary border-2 text-center")
