@@ -21,10 +21,56 @@ from simulador import render_simulador
 # ==========================================
 DIRETORIO_ATUAL = os.path.dirname(os.path.abspath(__file__))
 CAMINHO_PARQUET = os.path.join(DIRETORIO_ATUAL, '../data/df_ml1.parquet')
+CAMINHO_ML2 = os.path.join(DIRETORIO_ATUAL, '../data/df_ml2.parquet')
 
 if os.path.exists(CAMINHO_PARQUET):
     df_geral = pd.read_parquet(CAMINHO_PARQUET, engine='pyarrow')
     
+    # Enriquecer com DATA_ULT_SITUACAO do df_ml2 (sem coluna ID — merge por chaves naturais)
+    CAMINHO_ML2 = os.path.join(DIRETORIO_ATUAL, '../data/df_ml2.parquet')
+    if os.path.exists(CAMINHO_ML2) and 'DATA_ULT_SITUACAO' not in df_geral.columns:
+        try:
+            df_ml2 = pd.read_parquet(CAMINHO_ML2, engine='pyarrow')[
+                ['DATA_DEMANDA', 'BAIRRO', 'GRUPOSERVICO_DESCRICAO', 'DATA_ULT_SITUACAO']
+            ]
+            df_ml2['DATA_DEMANDA'] = pd.to_datetime(df_ml2['DATA_DEMANDA'], errors='coerce')
+            df_ml2 = df_ml2.drop_duplicates(subset=['DATA_DEMANDA', 'BAIRRO', 'GRUPOSERVICO_DESCRICAO'])
+            df_geral['DATA_DEMANDA'] = pd.to_datetime(df_geral['DATA_DEMANDA'], errors='coerce')
+            df_geral = df_geral.merge(
+                df_ml2, on=['DATA_DEMANDA', 'BAIRRO', 'GRUPOSERVICO_DESCRICAO'], how='left'
+            )
+        except Exception:
+            pass
+
+    # Enriquecer com LOGRADOURO e SERVICO_DESCRICAO dos CSVs brutos
+    if 'LOGRADOURO' not in df_geral.columns or 'SERVICO_DESCRICAO' not in df_geral.columns:
+        try:
+            import glob
+            csvs = glob.glob(os.path.join(DIRETORIO_ATUAL, '../data/*.csv'))
+            dfs_csv = []
+            for csv_path in csvs:
+                try:
+                    df_csv = pd.read_csv(
+                        csv_path, sep=';', encoding='latin1', on_bad_lines='skip', low_memory=False,
+                        usecols=['DATA_DEMANDA', 'BAIRRO', 'GRUPOSERVICO_DESCRICAO', 'SERVICO_DESCRICAO', 'LOGRADOURO']
+                    )
+                    dfs_csv.append(df_csv)
+                except Exception:
+                    pass
+            if dfs_csv:
+                df_raw = pd.concat(dfs_csv, ignore_index=True)
+                df_raw['DATA_DEMANDA'] = pd.to_datetime(df_raw['DATA_DEMANDA'], format='mixed', errors='coerce')
+                df_raw['BAIRRO'] = df_raw['BAIRRO'].astype(str).str.strip().str.upper()
+                df_raw['GRUPOSERVICO_DESCRICAO'] = df_raw['GRUPOSERVICO_DESCRICAO'].astype(str).str.strip().str.upper()
+                df_raw['LOGRADOURO'] = df_raw['LOGRADOURO'].astype(str).str.strip().str.upper()
+                df_raw = df_raw.drop_duplicates(subset=['DATA_DEMANDA', 'BAIRRO', 'GRUPOSERVICO_DESCRICAO'])
+                df_geral = df_geral.merge(
+                    df_raw[['DATA_DEMANDA', 'BAIRRO', 'GRUPOSERVICO_DESCRICAO', 'SERVICO_DESCRICAO', 'LOGRADOURO']],
+                    on=['DATA_DEMANDA', 'BAIRRO', 'GRUPOSERVICO_DESCRICAO'], how='left'
+                )
+        except Exception:
+            pass
+
     if 'GRUPOSERVICO_DESCRICAO' in df_geral.columns:
         df_geral['GRUPOSERVICO_DESCRICAO'] = (
             df_geral['GRUPOSERVICO_DESCRICAO']
@@ -37,12 +83,16 @@ if os.path.exists(CAMINHO_PARQUET):
     df_geral['DATA_DEMANDA'] = pd.to_datetime(df_geral['DATA_DEMANDA'], errors='coerce')
     df_geral['Ano'] = df_geral['DATA_DEMANDA'].dt.year
     df_geral['Mes'] = df_geral['DATA_DEMANDA'].dt.month
-    
+    df_geral['Dia_Semana'] = df_geral['DATA_DEMANDA'].dt.day_name()
+
+    if 'LOGRADOURO' in df_geral.columns:
+        df_geral['LOGRADOURO'] = df_geral['LOGRADOURO'].astype(str).str.strip().str.upper()
+
     df_geral = df_geral[(df_geral['Ano'] >= 2020) & (df_geral['Ano'] <= 2026)]
     anos_reais = sorted([int(x) for x in df_geral['Ano'].dropna().unique()])
     total_registros = f"{len(df_geral):,}".replace(",", ".")
 else:
-    df_geral = pd.DataFrame(columns=['Ano', 'BAIRRO', 'GRUPOSERVICO_DESCRICAO', 'SITUACAO', 'Mes'])
+    df_geral = pd.DataFrame(columns=['Ano', 'BAIRRO', 'GRUPOSERVICO_DESCRICAO', 'SITUACAO', 'Mes', 'Dia_Semana', 'DATA_ULT_SITUACAO'])
     anos_reais = []
     total_registros = "0"
 
