@@ -123,7 +123,7 @@ def render_ml1():
                     dbc.Col([html.H6("Acurácia Treino: 92.25%", className="fw-bold mb-2 small text-muted", style={'fontFamily': 'monospace'}), gerar_tabela_terminal(df_treino_dt)], width=12, lg=6, className="mb-3 mb-lg-0"),
                     dbc.Col([html.H6("Acurácia Teste: 89.11%", className="fw-bold mb-2 small text-muted", style={'fontFamily': 'monospace'}), gerar_tabela_terminal(df_teste_dt)], width=12, lg=6),
                 ]),
-                html.Div("⚠️ Overfitting Evidente: O modelo tendeu a memorizar excessivamente a estrutura interna da base de treino. Ao deparar-se com novos dados da base de teste, a capacidade de rastreamento do gargalo (Recall) decaiu severamente de 0.79 para 0.72.", className="mt-3 text-warning fw-bold small"),
+                html.Div("Aviso — Overfitting Evidente: O modelo tendeu a memorizar excessivamente a estrutura interna da base de treino. Ao deparar-se com novos dados da base de teste, a capacidade de rastreamento do gargalo (Recall) decaiu severamente de 0.79 para 0.72.", className="mt-3 text-warning fw-bold small"),
                 html.Hr(className="my-4"),
                 dbc.Row([
                     dbc.Col([html.Img(src='/assets/ML1/shap_arvore_de_decisao_bar.png', className='img-fluid shadow-sm rounded border')], width=12, md=6, className="mb-3 mb-md-0"),
@@ -141,7 +141,7 @@ def render_ml1():
                     dbc.Col([html.H6("Acurácia Treino: 92.25%", className="fw-bold mb-2 small text-muted", style={'fontFamily': 'monospace'}), gerar_tabela_terminal(df_treino_rf)], width=12, lg=6, className="mb-3 mb-lg-0"),
                     dbc.Col([html.H6("Acurácia Teste: 89.40%", className="fw-bold mb-2 small text-muted", style={'fontFamily': 'monospace'}), gerar_tabela_terminal(df_teste_rf)], width=12, lg=6),
                 ]),
-                html.Div("💡 Estabilização Operacional: A criação do conjunto paralelo de árvores mitigou a instabilidade inerente à árvore simples, promovendo um ganho de consistência e elevando o F1-Score do gargalo para 0.76 na base de testes.", className="mt-3 text-primary fw-bold small"),
+                html.Div("Nota — Estabilização Operacional: A criação do conjunto paralelo de árvores mitigou a instabilidade inerente à árvore simples, promovendo um ganho de consistência e elevando o F1-Score do gargalo para 0.76 na base de testes.", className="mt-3 text-primary fw-bold small"),
                 html.Hr(className="my-4"),
                 dbc.Row([
                     dbc.Col([html.Img(src='/assets/ML1/shap_random_forest_bar.png', className='img-fluid shadow-sm rounded border')], width=12, md=6, className="mb-3 mb-md-0"),
@@ -159,7 +159,7 @@ def render_ml1():
                     dbc.Col([html.H6("Acurácia Treino: 90.34%", className="fw-bold mb-2 small text-muted", style={'fontFamily': 'monospace'}), gerar_tabela_terminal(df_treino_xgb)], width=12, lg=6, className="mb-3 mb-lg-0"),
                     dbc.Col([html.H6("Acurácia Teste: 90.17%", className="fw-bold mb-2 small text-muted", style={'fontFamily': 'monospace'}), gerar_tabela_terminal(df_teste_xgb)], width=12, lg=6),
                 ]),
-                html.Div("🏆 Generalização Preditiva Superior: Ao regularizar os gradientes sequenciais, o XGBoost abriu mão de superajustar a base de treino em prol de máxima estabilidade. Apresentou a menor variação do estudo (apenas 0.17% de queda entre treino e teste), consolidando os melhores índices práticos.", className="mt-3 text-success fw-bold small"),
+                html.Div("Destaque — Generalização Preditiva Superior: Ao regularizar os gradientes sequenciais, o XGBoost abriu mão de superajustar a base de treino em prol de máxima estabilidade. Apresentou a menor variação do estudo (apenas 0.17% de queda entre treino e teste), consolidando os melhores índices práticos.", className="mt-3 text-success fw-bold small"),
                 html.Hr(className="my-4"),
                 dbc.Row([
                     dbc.Col([html.Img(src='/assets/ML1/shap_xgboost_bar.png', className='img-fluid shadow-sm rounded border'), html.P("Importância Consolidada: O Serviço se mantém como pilar absoluto, mas as amarras do gradiente equalizaram as micro-decisões do modelo.", className="text-muted small mt-2 text-center fst-italic")], width=12, md=6, className="mb-3 mb-md-0"),

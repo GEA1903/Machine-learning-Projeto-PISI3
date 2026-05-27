@@ -102,7 +102,7 @@ def render_ml2():
             dbc.CardBody([
                 html.P("Divide a base de dados em ramificações baseadas em perguntas lógicas sobre as características das obras, calculando a média dos prazos de resolução dos registros contidos em cada folha final para emitir a estimativa temporal.", className="text-muted small fst-italic mb-4"),
                 dbc.Row([dbc.Col(gerar_tabela_regressao(df_treino_dt), width=12, lg=8, className="mx-auto")]),
-                html.Div("⚠️ Sinais de Memorização Frágil: O algoritmo apresentou alto poder de ajuste inicial no treino, mas desmoronou drasticamente ao enfrentar dados inéditos na validação, cravando o pior R² (0.1481) entre os modelos baseados em árvores.", className="mt-3 text-warning fw-bold small text-center"),
+                html.Div("Aviso — Sinais de Memorização Frágil: O algoritmo apresentou alto poder de ajuste inicial no treino, mas desmoronou drasticamente ao enfrentar dados inéditos na validação, cravando o pior R² (0.1481) entre os modelos baseados em árvores.", className="mt-3 text-warning fw-bold small text-center"),
                 html.Hr(className="my-4"),
                 dbc.Row([
                     dbc.Col([html.Img(src='/assets/ML2/shap_arvore_de_decisao_regressora_bar.png', className='img-fluid shadow-sm rounded border')], width=12, md=6, className="mb-3 mb-md-0"),
@@ -117,7 +117,7 @@ def render_ml2():
             dbc.CardBody([
                 html.P("Combina centenas de árvores de regressão construídas de forma paralela e independente (Bagging), mitigando distorções individuais ao consolidar o prazo estimado final através da média matemática de todo o comitê.", className="text-muted small fst-italic mb-4"),
                 dbc.Row([dbc.Col(gerar_tabela_regressao(df_rf), width=12, lg=8, className="mx-auto")]),
-                html.Div("💡 Soberania em Generalização: Graças ao voto por média e às amarras estruturais aplicadas, o modelo barrou o ruído das flutuações urbanas, mantendo o menor desvio entre treino e teste e consolidando-se como o modelo mais seguro para produção.", className="mt-3 text-primary fw-bold small text-center"),
+                html.Div("Nota — Soberania em Generalização: Graças ao voto por média e às amarras estruturais aplicadas, o modelo barrou o ruído das flutuações urbanas, mantendo o menor desvio entre treino e teste e consolidando-se como o modelo mais seguro para produção.", className="mt-3 text-primary fw-bold small text-center"),
                 html.Hr(className="my-4"),
                 dbc.Row([
                     dbc.Col([html.Img(src='/assets/ML2/shap_random_forest_regressor_bar.png', className='img-fluid shadow-sm rounded border')], width=12, md=6, className="mb-3 mb-md-0"),
@@ -132,7 +132,7 @@ def render_ml2():
             dbc.CardBody([
                 html.P("O algoritmo constrói árvores regressoras de forma sequencial, fazendo com que cada novo modelo aprenda e foque explicitamente em corrigir os resíduos numéricos e erros cometidos pelas estruturas predecessoras.", className="text-muted small fst-italic mb-4"),
                 dbc.Row([dbc.Col(gerar_tabela_regressao(df_xgb), width=12, lg=8, className="mx-auto")]),
-                html.Div("⚠️ Ajuste Sequencial Agressivo: Embora seja o estado da arte na classificação, o método de correção de erros do Boosting mostrou-se sensível demais à volatilidade dos prazos da EMLURB, gerando um sobreajuste que inflou o treino mas perdeu eficácia no teste.", className="mt-3 text-success fw-bold small text-center"),
+                html.Div("Aviso — Ajuste Sequencial Agressivo: Embora seja o estado da arte na classificação, o método de correção de erros do Boosting mostrou-se sensível demais à volatilidade dos prazos da EMLURB, gerando um sobreajuste que inflou o treino mas perdeu eficácia no teste.", className="mt-3 text-success fw-bold small text-center"),
                 html.Hr(className="my-4"),
                 dbc.Row([
                     dbc.Col([html.Img(src='/assets/ML2/shap_xgboost_regressor_bar.png', className='img-fluid shadow-sm rounded border')], width=12, md=6, className="mb-3 mb-md-0"),

@@ -247,7 +247,7 @@ def toggle_caixa_servicos(modo):
 def update_bairro_autocomplete(search_value, selecionados):
     if not search_value: search_value = ""
     opcoes_atuais = [{'label': str(b), 'value': str(b)} for b in selecionados if b != "LIMITE"] if selecionados else []
-    if selecionados and len(selecionados) >= 5: return opcoes_atuais + [{"label": "⚠️ Limite de 5 bairros atingido", "value": "LIMITE", "disabled": True}]
+    if selecionados and len(selecionados) >= 5: return opcoes_atuais + [{"label": "Limite de 5 bairros atingido", "value": "LIMITE", "disabled": True}]
     todos_bairros = sorted(df_geral['BAIRRO'].dropna().unique())
     buscas_encontradas = [{'label': str(b), 'value': str(b)} for b in todos_bairros if search_value.upper() in str(b).upper()]
     valores_atuais = [opt['value'] for opt in opcoes_atuais]
@@ -331,7 +331,7 @@ def rodar_simulacao(n_clicks, bairro, servico, mes, dia_semana, ano):
         raise PreventUpdate
         
     if not all([bairro, servico, mes is not None, dia_semana is not None, ano]):
-        return dbc.Alert("⚠️ Preencha todos os campos do formulário para o processamento.", color="warning")
+        return dbc.Alert("Preencha todos os campos do formulário para o processamento.", color="warning")
         
     try:
         DIRETORIO_ATUAL = os.path.dirname(os.path.abspath(__file__))
@@ -378,7 +378,7 @@ def rodar_simulacao(n_clicks, bairro, servico, mes, dia_semana, ano):
                     html.I(className="fa-solid fa-circle-check fa-2x text-success me-3"),
                     html.H5("Fluxo Normal Confirmado", className="fw-bold text-success mb-0")
                 ], className="d-flex align-items-center mb-3"),
-                html.P("✅ Tudo certo com a sua denúncia! Nossa IA analisou o cenário e não encontrou indícios de atrasos crônicos. O serviço fluirá naturalmente dentro do cronograma e da malha de atendimento da zeladoria municipal.", className="text-muted small mb-0")
+                html.P("Tudo certo com a sua denúncia! Nossa IA analisou o cenário e não encontrou indícios de atrasos crônicos. O serviço fluirá naturalmente dentro do cronograma e da malha de atendimento da zeladoria municipal.", className="text-muted small mb-0")
             ], className="p-4 bg-white rounded-4 shadow-sm border-start border-success border-5 mb-4")
             
         card_prazo = html.Div([
