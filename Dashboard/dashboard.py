@@ -148,9 +148,10 @@ def update_eda_graphs(botoes_clicks, click1, click2, n_reset):
     df_g = df_a2[df_a2['SITUACAO'].isin(status_g)]
     fila = df_g['BAIRRO'].value_counts().head(10).reset_index(name='Qtd')
     
-    fig2 = px.bar(fila, x='Qtd', y='BAIRRO', orientation='h', color='Qtd', color_continuous_scale='Oranges',
+    fig2 = px.bar(fila, x='Qtd', y='BAIRRO', orientation='h', color='BAIRRO',
+                  color_discrete_sequence=OKABE_ITO,
                   title=f"Ato 2: Onde a Fila Trava? ({servico or 'Geral'})", template='plotly_white')
-    fig2.update_layout(yaxis={'categoryorder':'total ascending'}, height=520)
+    fig2.update_layout(yaxis={'categoryorder':'total ascending'}, height=520, showlegend=False)
 
     bairros_f = [click2['points'][0]['y']] if click2 else fila.head(5)['BAIRRO'].tolist()
     df_f = df_a2[df_a2['BAIRRO'].isin(bairros_f)]

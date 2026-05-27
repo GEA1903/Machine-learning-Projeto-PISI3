@@ -4,6 +4,12 @@ import plotly.express as px
 import pandas as pd
 import numpy as np
 
+# ============================================================
+# PALETA OKABE-ITO — Padrão científico para acessibilidade a
+# daltônicos (adotada pela revista Nature).
+# ============================================================
+OKABE_ITO = ['#0072B2', '#D55E00', '#009E73', '#E69F00', '#56B4E9', '#CC79A7', '#F0E442', '#000000']
+
 def render_correlacao(df_geral=None):
     if df_geral is None:
         return dbc.Container([html.H3("Aguardando carregamento dos dados...")])
@@ -53,7 +59,7 @@ def render_correlacao(df_geral=None):
         template='plotly_white',
         labels={'Volume_Total': 'Volume Total de Chamados', 'Taxa_Ineficiencia_%': 'Taxa de Ineficiência (%)'}
     )
-    fig_dispensao.update_traces(marker=dict(size=10, opacity=0.7, line=dict(width=1, color='DarkSlateGrey')))
+    fig_dispensao.update_traces(marker=dict(size=10, opacity=0.7, color=OKABE_ITO[0], line=dict(width=1, color='DarkSlateGrey')))
 
     # 2.2. CALCULO MANUAL DA REGRESSÃO (A mágica sem statsmodels)
     if not df_corr.empty:
