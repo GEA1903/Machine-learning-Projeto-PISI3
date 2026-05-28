@@ -95,9 +95,9 @@ def render_eda(anos_reais, df_all=None):
     fig4 = px.bar(
         top10_bairros, x='Volume', y='Bairro', orientation='h',
         title='4. Ranking de Volume: Top 10 Bairros Críticos',
-        color='Bairro', color_discrete_sequence=OKABE_ITO, template='plotly_white'
+        color='Volume', color_continuous_scale='Oranges', template='plotly_white'
     )
-    fig4.update_layout(yaxis={'categoryorder': 'total ascending'}, showlegend=False)
+    fig4.update_layout(yaxis={'categoryorder': 'total ascending'}, showlegend=False, coloraxis_showscale=False)
 
     # ──────────────────────────────────────────
     # FIG 5 — Top 20 Bairros (Treemap)
@@ -108,8 +108,9 @@ def render_eda(anos_reais, df_all=None):
     fig5 = px.treemap(
         top20_bairros, path=['Bairro'], values='Volume',
         title='5. Representatividade Visual Espacial: Top 20 Bairros',
-        color='Bairro', color_discrete_sequence=OKABE_ITO
+        color='Volume', color_continuous_scale='Oranges'
     )
+    fig5.update_layout(coloraxis_showscale=False)
 
     # ──────────────────────────────────────────
     # FIG 6 — Proporção de Resoluções nos 5 Bairros Críticos
@@ -136,11 +137,12 @@ def render_eda(anos_reais, df_all=None):
             top10_vias, x='Quantidade_Defeitos', y='Logradouro', orientation='h',
             title='7. Top 10 Vias Mais Críticas (Maior Número de Defeitos)',
             labels={'Quantidade_Defeitos': 'Nº de Ocorrências', 'Logradouro': 'Via/Logradouro'},
-            color='Logradouro', color_discrete_sequence=OKABE_ITO, template='plotly_white'
+            color='Quantidade_Defeitos', color_continuous_scale='Oranges', template='plotly_white'
         )
         fig_vias.update_layout(
             yaxis={'categoryorder': 'total ascending', 'tickangle': 0},
-            xaxis={'tickangle': 0}, yaxis_title=None, showlegend=False, height=500
+            xaxis={'tickangle': 0}, yaxis_title=None, showlegend=False, height=500,
+            coloraxis_showscale=False
         )
     else:
         fig_vias = None
@@ -172,13 +174,14 @@ def render_eda(anos_reais, df_all=None):
         fig9 = px.bar(
             top10_servicos, x='Volume', y='Serviço', orientation='h',
             title=f'9. Detalhamento Crítico: Principais Queixas em "{maior_grupo}"',
-            color='Serviço', color_discrete_sequence=OKABE_ITO,
+            color='Volume', color_continuous_scale='Oranges',
             labels={'Volume': 'Qtd. Ocorrências', 'Serviço': 'Subcategoria de Serviço'},
             template='plotly_white'
         )
         fig9.update_layout(
             yaxis={'categoryorder': 'total ascending', 'tickangle': 0},
-            xaxis={'tickangle': 0}, yaxis_title=None, showlegend=False, height=500
+            xaxis={'tickangle': 0}, yaxis_title=None, showlegend=False, height=500,
+            coloraxis_showscale=False
         )
     else:
         fig9 = None
@@ -220,14 +223,14 @@ def render_eda(anos_reais, df_all=None):
         fig_tempo = px.bar(
             top10_lentos, x='TEMPO_DIAS', y='GRUPOSERVICO_DESCRICAO', orientation='h',
             title='14. Tempo Médio de Resolução da Prefeitura', text='TEMPO_DIAS',
-            color='GRUPOSERVICO_DESCRICAO', color_discrete_sequence=OKABE_ITO,
+            color='TEMPO_DIAS', color_continuous_scale='Oranges',
             labels={'TEMPO_DIAS': '', 'GRUPOSERVICO_DESCRICAO': ''}, template='plotly_white'
         )
         fig_tempo.update_layout(
             yaxis={'categoryorder': 'total ascending'}, height=500,
             margin=dict(r=120), showlegend=False,
             xaxis=dict(showgrid=True, showticklabels=True, title=None, dtick=200),
-            yaxis_title=None
+            yaxis_title=None, coloraxis_showscale=False
         )
         fig_tempo.update_traces(
             textposition='outside', texttemplate='<b>%{text} dias</b>', cliponaxis=False
