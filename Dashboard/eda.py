@@ -35,7 +35,7 @@ def render_eda(anos_reais, df_all=None):
             
         df_all['DATA_DEMANDA'] = pd.to_datetime(df_all['DATA_DEMANDA'], errors='coerce')
 
-        # Garante que Mes existe
+        # Garante que Mes exists
         if 'Mes' not in df_all.columns:
             df_all['Mes'] = df_all['DATA_DEMANDA'].dt.month
 
@@ -56,6 +56,9 @@ def render_eda(anos_reais, df_all=None):
                 html.P("Verifique se as colunas do seu arquivo coincidem com os nomes mapeados pelo script de análise.", className="mb-0 small")
             ], color="warning", className="mt-5 shadow rounded-3")
         ])
+
+    # Criando uma versão customizada e mais escura da paleta Oranges (remove os tons muito claros)
+    PALETA_LARANJA_ESCURA = px.colors.sequential.Oranges[3:]
 
     # ──────────────────────────────────────────
     # FIG 1 — Evolução do Volume Total de Denúncias
@@ -113,7 +116,7 @@ def render_eda(anos_reais, df_all=None):
     )
 
     # ──────────────────────────────────────────
-    # FIG 4 — Top 10 Bairros Críticos
+    # FIG 4 — Top 10 Bairros Críticos (CORRIGIDO: Legenda começa do 0 + Barras Escuras)
     # ──────────────────────────────────────────
     top10_bairros = df_all['BAIRRO'].value_counts().head(10).reset_index()
     top10_bairros.columns = ['Bairro', 'Volume']
@@ -121,7 +124,8 @@ def render_eda(anos_reais, df_all=None):
     fig4 = px.bar(
         top10_bairros, x='Volume', y='Bairro', orientation='h',
         title='4. Ranking de Volume: Top 10 Bairros Críticos',
-        color='Volume', color_continuous_scale='Oranges', template='plotly_white'
+        color='Volume', color_continuous_scale=PALETA_LARANJA_ESCURA,
+        template='plotly_white'
     )
     fig4.update_layout(
         yaxis={'categoryorder': 'total ascending'}, 
@@ -163,16 +167,18 @@ def render_eda(anos_reais, df_all=None):
     )
 
     # ──────────────────────────────────────────
-    # FIG 7 — Top 10 Vias Mais Críticas (condicional)
+    # FIG 7 — Top 10 Vias Mais Críticas (CORRIGIDO: Sem valores negativos + Barras Escuras)
     # ──────────────────────────────────────────
     if 'LOGRADOURO' in df_all.columns:
         top10_vias = df_all['LOGRADOURO'].value_counts().head(10).reset_index()
         top10_vias.columns = ['Logradouro', 'Quantidade_Defeitos']
+
         fig_vias = px.bar(
             top10_vias, x='Quantidade_Defeitos', y='Logradouro', orientation='h',
             title='7. Top 10 Vias Mais Críticas (Maior Número de Defeitos)',
             labels={'Quantidade_Defeitos': 'Nº de Ocorrências', 'Logradouro': 'Via/Logradouro'},
-            color='Quantidade_Defeitos', color_continuous_scale='Oranges', template='plotly_white'
+            color='Quantidade_Defeitos', color_continuous_scale=PALETA_LARANJA_ESCURA,
+            template='plotly_white'
         )
         fig_vias.update_layout(
             yaxis={'categoryorder': 'total ascending', 'tickangle': 0},
@@ -241,7 +247,7 @@ def render_eda(anos_reais, df_all=None):
     fig10.update_layout(xaxis_tickangle=-45, margin=dict(b=120))
 
     # ──────────────────────────────────────────
-    # FIG TEMPO — Gráfico 14: Tempo Médio de Resolução (Ajustado com alto contraste de laranjas)
+    # FIG TEMPO — Gráfico 14: Tempo Médio de Resolução
     # ──────────────────────────────────────────
     if 'DATA_ULT_SITUACAO' in df_all.columns:
         resolvidos = df_all[df_all['SITUACAO'] == 'ATENDIDA'].copy()
@@ -411,7 +417,7 @@ def render_eda(anos_reais, df_all=None):
             dbc.Col(dbc.Card([dbc.CardBody(dcc.Graph(figure=fig6))], className="mb-4 shadow border-0"), width=12),
         ]),
 
-        # Linha 5: Top 10 Vias (se disponível) + Rosca de Eficiência
+        # Linha 5: Top 10 Vias + Rosca de Eficiência
         dbc.Row([
             *(
                 [dbc.Col(dbc.Card([dbc.CardBody(dcc.Graph(figure=fig_vias))], className="mb-4 shadow border-0"), width=12, md=7)]
@@ -423,7 +429,7 @@ def render_eda(anos_reais, df_all=None):
             ),
         ]),
 
-        # Linha 6: Detalhamento do Maior Grupo (se disponível)
+        # Linha 6: Detalhamento do Maior Grupo
         *(
             [dbc.Row([
                 dbc.Col(dbc.Card([dbc.CardBody(dcc.Graph(figure=fig9))], className="mb-4 shadow border-0"), width=12),
@@ -436,7 +442,7 @@ def render_eda(anos_reais, df_all=None):
             dbc.Col(dbc.Card([dbc.CardBody(dcc.Graph(figure=fig10))], className="mb-4 shadow border-0"), width=12),
         ]),
 
-        # Linha 8: Tempo Médio de Resolução (se disponível)
+        # Linha 8: Tempo Médio de Resolução
         *(
             [dbc.Row([
                 dbc.Col(dbc.Card([dbc.CardBody(dcc.Graph(figure=fig_tempo))], className="mb-4 shadow border-0"), width=12),
