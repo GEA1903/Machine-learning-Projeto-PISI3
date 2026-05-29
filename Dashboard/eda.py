@@ -14,22 +14,48 @@ OKABE_ITO = ['#0072B2', '#D55E00', '#009E73', '#E69F00', '#56B4E9', '#CC79A7', '
 _DIAS_NUM = {0: 'Monday', 1: 'Tuesday', 2: 'Wednesday', 3: 'Thursday', 4: 'Friday', 5: 'Saturday', 6: 'Sunday'}
 
 def render_eda(anos_reais, df_all=None):
-    if df_all is None:
-        return dbc.Container([html.H3("Aguardando carregamento dos dados...")])
+    # ─── PROTEÇÃO 1: Verifica se o DataFrame foi fornecido ───
+    if df_all is None or (isinstance(df_all, pd.DataFrame) and df_all.empty):
+        return dbc.Container([
+            dbc.Alert([
+                html.H4("Dados não encontrados!", className="alert-heading fw-bold"),
+                html.P("O DataFrame 'df_all' está vazio ou não foi carregado corretamente no arquivo principal (app.py/index.py)."),
+                html.Hr(),
+                html.P("Verifique se o caminho do seu arquivo Parquet ou CSV está correto e se a leitura dos dados foi bem-sucedida.", className="mb-0 small")
+            ], color="danger", className="mt-5 shadow rounded-3")
+        ])
 
-    df_all = df_all.copy()
-    df_all['DATA_DEMANDA'] = pd.to_datetime(df_all['DATA_DEMANDA'], errors='coerce')
+    # ─── PROTEÇÃO 2: Evita quebras por estrutura ou colunas ausentes ───
+    try:
+        df_all = df_all.copy()
+        
+        # Garante a existência da coluna essencial para o funcionamento dos gráficos
+        if 'DATA_DEMANDA' not in df_all.columns:
+            raise KeyError("A coluna essencial 'DATA_DEMANDA' não foi encontrada no conjunto de dados informado.")
+            
+        df_all['DATA_DEMANDA'] = pd.to_datetime(df_all['DATA_DEMANDA'], errors='coerce')
 
-    # Garante que Mes existe
-    if 'Mes' not in df_all.columns:
-        df_all['Mes'] = df_all['DATA_DEMANDA'].dt.month
+        # Garante que Mes existe
+        if 'Mes' not in df_all.columns:
+            df_all['Mes'] = df_all['DATA_DEMANDA'].dt.month
 
-    # Garante que Dia_Semana (texto) existe
-    if 'Dia_Semana' not in df_all.columns:
-        if 'Dia_Semana_Num' in df_all.columns:
-            df_all['Dia_Semana'] = df_all['Dia_Semana_Num'].map(_DIAS_NUM)
-        else:
-            df_all['Dia_Semana'] = df_all['DATA_DEMANDA'].dt.day_name()
+        # Garante que Dia_Semana (texto) existe
+        if 'Dia_Semana' not in df_all.columns:
+            if 'Dia_Semana_Num' in df_all.columns:
+                df_all['Dia_Semana'] = df_all['Dia_Semana_Num'].map(_DIAS_NUM)
+            else:
+                df_all['Dia_Semana'] = df_all['DATA_DEMANDA'].dt.day_name()
+
+    except Exception as e:
+        # Se qualquer conversão acima falhar, captura o erro interno e impede o travamento do Dash
+        return dbc.Container([
+            dbc.Alert([
+                html.H4("Erro de Processamento de Dados", className="alert-heading fw-bold"),
+                html.P(f"Ocorreu uma falha ao estruturar as colunas para os gráficos:"),
+                html.Code(str(e), className="d-block my-2 p-2 bg-dark text-warning rounded text-start"),
+                html.P("Verifique se as colunas do seu arquivo coincidem com os nomes mapeados pelo script de análise.", className="mb-0 small")
+            ], color="warning", className="mt-5 shadow rounded-3")
+        ])
 
     # ──────────────────────────────────────────
     # FIG 1 — Evolução do Volume Total de Denúncias
@@ -97,7 +123,16 @@ def render_eda(anos_reais, df_all=None):
         title='4. Ranking de Volume: Top 10 Bairros Críticos',
         color='Volume', color_continuous_scale='Oranges', template='plotly_white'
     )
-    fig4.update_layout(yaxis={'categoryorder': 'total ascending'}, showlegend=False, coloraxis_showscale=False)
+    fig4.update_layout(
+        yaxis={'categoryorder': 'total ascending'}, 
+        showlegend=False, 
+        coloraxis_showscale=True,
+        coloraxis_colorbar=dict(
+            title="Volume",
+            thickness=15,
+            len=0.8
+        )
+    )
 
     # ──────────────────────────────────────────
     # FIG 5 — Top 20 Bairros (Treemap)
@@ -164,7 +199,7 @@ def render_eda(anos_reais, df_all=None):
     )
 
     # ──────────────────────────────────────────
-    # FIG 9 — Detalhamento Crítico: Principais Queixas no Maior Grupo (condicional)
+    # FIG 9 — Detalhamento Crítico (Barras em azul único)
     # ──────────────────────────────────────────
     if 'SERVICO_DESCRICAO' in df_all.columns:
         maior_grupo = df_all['GRUPOSERVICO_DESCRICAO'].value_counts().idxmax()
@@ -174,7 +209,7 @@ def render_eda(anos_reais, df_all=None):
         fig9 = px.bar(
             top10_servicos, x='Volume', y='Serviço', orientation='h',
             title=f'9. Detalhamento Crítico: Principais Queixas em "{maior_grupo}"',
-            color='Volume', color_continuous_scale='Oranges',
+            color_discrete_sequence=['#0072B2'],
             labels={'Volume': 'Qtd. Ocorrências', 'Serviço': 'Subcategoria de Serviço'},
             template='plotly_white'
         )
@@ -206,7 +241,7 @@ def render_eda(anos_reais, df_all=None):
     fig10.update_layout(xaxis_tickangle=-45, margin=dict(b=120))
 
     # ──────────────────────────────────────────
-    # FIG TEMPO — Tempo Médio de Resolução (condicional)
+    # FIG TEMPO — Gráfico 14: Tempo Médio de Resolução (Ajustado com alto contraste de laranjas)
     # ──────────────────────────────────────────
     if 'DATA_ULT_SITUACAO' in df_all.columns:
         resolvidos = df_all[df_all['SITUACAO'] == 'ATENDIDA'].copy()
@@ -220,17 +255,22 @@ def render_eda(anos_reais, df_all=None):
         tempo_medio = resolvidos.groupby('GRUPOSERVICO_DESCRICAO')['TEMPO_DIAS'].mean().reset_index()
         tempo_medio['TEMPO_DIAS'] = tempo_medio['TEMPO_DIAS'].round(0)
         top10_lentos = tempo_medio.sort_values(by='TEMPO_DIAS', ascending=False).head(10)
+        
+        min_valor = top10_lentos['TEMPO_DIAS'].min()
+
         fig_tempo = px.bar(
             top10_lentos, x='TEMPO_DIAS', y='GRUPOSERVICO_DESCRICAO', orientation='h',
             title='14. Tempo Médio de Resolução da Prefeitura', text='TEMPO_DIAS',
             color='TEMPO_DIAS', color_continuous_scale='Oranges',
+            color_continuous_midpoint=min_valor - 5,
             labels={'TEMPO_DIAS': '', 'GRUPOSERVICO_DESCRICAO': ''}, template='plotly_white'
         )
         fig_tempo.update_layout(
             yaxis={'categoryorder': 'total ascending'}, height=500,
             margin=dict(r=120), showlegend=False,
             xaxis=dict(showgrid=True, showticklabels=True, title=None, dtick=200),
-            yaxis_title=None, coloraxis_showscale=False
+            yaxis_title=None, 
+            coloraxis_showscale=False
         )
         fig_tempo.update_traces(
             textposition='outside', texttemplate='<b>%{text} dias</b>', cliponaxis=False
