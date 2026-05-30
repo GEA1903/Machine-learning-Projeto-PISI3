@@ -4,6 +4,7 @@ import plotly.express as px
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans, AgglomerativeClustering, DBSCAN
+import hdbscan  # Importação da nova biblioteca
 
 def render_cluster(df_geral=None):
     if df_geral is None:
@@ -22,23 +23,35 @@ def render_cluster(df_geral=None):
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
 
+    # 1. K-Means
     kmeans = KMeans(n_clusters=4, random_state=42, n_init=10)
     df_bairros['Cluster_KMeans'] = 'Grupo ' + kmeans.fit_predict(X_scaled).astype(str)
 
+    # 2. Hierárquico
     aglo = AgglomerativeClustering(n_clusters=4)
     df_bairros['Cluster_Hierarquico'] = 'Camada ' + aglo.fit_predict(X_scaled).astype(str)
 
+    # 3. DBSCAN
     dbscan = DBSCAN(eps=0.4, min_samples=4)
     dbscan_labels = dbscan.fit_predict(X_scaled)
-    # Mapeia o -1 para "Ruído/Outlier" e o resto para "Zona X"
     df_bairros['Cluster_DBSCAN'] = [
         'Anomalia (Outlier)' if label == -1 else f'Zona Adjacente {label}' 
         for label in dbscan_labels
     ]
 
+    # 4. HDBSCAN (O Novo Algoritmo)
+    hdbscan_clusterer = hdbscan.HDBSCAN(min_cluster_size=3, min_samples=2, gen_min_span_tree=True)
+    hdbscan_labels = hdbscan_clusterer.fit_predict(X_scaled)
+    df_bairros['Cluster_HDBSCAN'] = [
+        'Anomalia (Outlier)' if label == -1 else f'Zona de Densidade {label}' 
+        for label in hdbscan_labels
+    ]
+
     media_vol = df_bairros['Volume_Total'].mean()
     media_inef = df_bairros['Taxa_Ineficiencia_%'].mean()
 
+    # ================= CONSTRUÇÃO DAS FIGURAS =================
+    
     fig_kmeans = px.scatter(
         df_bairros, x='Volume_Total', y='Taxa_Ineficiencia_%', color='Cluster_KMeans',
         size='Volume_Total', hover_name='BAIRRO',
@@ -61,12 +74,10 @@ def render_cluster(df_geral=None):
     fig_aglo.add_hline(y=media_inef, line_dash="dash", line_color="grey", opacity=0.3)
     fig_aglo.update_traces(marker=dict(line=dict(width=1, color='DarkSlateGrey')))
 
-    # Gráfico 3: DBSCAN 
     fig_dbscan = px.scatter(
         df_bairros, x='Volume_Total', y='Taxa_Ineficiencia_%', color='Cluster_DBSCAN',
         size='Volume_Total', hover_name='BAIRRO',
         title='3. Algoritmo DBSCAN: Densidade e Isolamento de Anomalias', template='plotly_white',
-        # Definindo uma paleta onde a anomalia ganha destaque (ex: Vermelho/Preto para anomalias se preferir)
         color_discrete_sequence=['#009E73', '#56B4E9', '#D55E00', '#CC79A7', '#000000'], size_max=35,
         labels={'Volume_Total': 'Volume de Chamados', 'Taxa_Ineficiencia_%': 'Ineficiência (%)'}
     )
@@ -74,21 +85,31 @@ def render_cluster(df_geral=None):
     fig_dbscan.add_hline(y=media_inef, line_dash="dash", line_color="grey", opacity=0.3)
     fig_dbscan.update_traces(marker=dict(line=dict(width=1, color='DarkSlateGrey')))
 
+    #HDBSCAN
+    fig_hdbscan = px.scatter(
+        df_bairros, x='Volume_Total', y='Taxa_Ineficiencia_%', color='Cluster_HDBSCAN',
+        size='Volume_Total', hover_name='BAIRRO',
+        title='4. Algoritmo HDBSCAN: Densidade Hierárquica Automática', template='plotly_white',
+        color_discrete_sequence=['#CC79A7', '#E69F00', '#0072B2', '#009E73', '#D55E00'], size_max=35,
+        labels={'Volume_Total': 'Volume de Chamados', 'Taxa_Ineficiencia_%': 'Ineficiência (%)'}
+    )
+    fig_hdbscan.add_vline(x=media_vol, line_dash="dash", line_color="grey", opacity=0.3)
+    fig_hdbscan.add_hline(y=media_inef, line_dash="dash", line_color="grey", opacity=0.3)
+    fig_hdbscan.update_traces(marker=dict(line=dict(width=1, color='DarkSlateGrey')))
+
+
     return dbc.Container([
         html.H3("Clusterização Geográfica de Zonas Críticas", className="text-primary my-4 fw-bold"),
         html.P("Análise comparativa de aprendizado não supervisionado para identificação de demandas sistêmicas estruturais.", className="text-secondary mb-4"),
 
         # ================= PRIMEIRA LINHA: K-MEANS =================
         dbc.Row([
-            # Coluna do Gráfico (Esquerda)
             dbc.Col([
                 dbc.Card(dbc.CardBody(dcc.Graph(figure=fig_kmeans)), className="shadow-sm border-0 h-100")
             ], md=6, className="mb-4"),
 
-            # Coluna do Texto (Direita)
             dbc.Col([
                 html.H4("1. Algoritmo K-Means: Padrões de Crise Urbano", className="text-dark fw-bold mb-3"),
-
                 html.H6("Descrição dos Grupos", className="text-primary fw-bold mb-2"),
                 html.Ul([
                     html.Li([html.Strong("Grupo 0 (Verde - Canto Superior Esquerdo) — Os 'Esquecidos':"), " Têm baixo volume de queixas (abaixo de 6k), mas a taxa de ineficiência é muito alta (acima de 21%)."]),
@@ -108,15 +129,12 @@ def render_cluster(df_geral=None):
 
         # ================= SEGUNDA LINHA: HIERÁRQUICO =================
         dbc.Row([
-            # Coluna do Gráfico (Esquerda)
             dbc.Col([
                 dbc.Card(dbc.CardBody(dcc.Graph(figure=fig_aglo)), className="shadow-sm border-0 h-100")
             ], md=6, className="mb-4"),
 
-            # Coluna do Texto (Direita)
             dbc.Col([
                 html.H4("2. Algoritmo Hierárquico: Contraprova Espacial", className="text-dark fw-bold mb-3"),
-
                 html.H6("Descrição dos Grupos", className="text-success fw-bold mb-2"),
                 html.Ul([
                     html.Li([html.Strong("Camada 1 (Rosa - Canto Superior Esquerdo) — O 'Gargalo Isolado':"), " Isola perfeitamente a massa de baixo volume que sofre com ineficiência crítica (acima de 21%)."]),
@@ -136,15 +154,12 @@ def render_cluster(df_geral=None):
 
         # ================= TERCEIRA LINHA: DBSCAN =================
         dbc.Row([
-            # Coluna do Gráfico (Esquerda)
             dbc.Col([
                 dbc.Card(dbc.CardBody(dcc.Graph(figure=fig_dbscan)), className="shadow-sm border-0 h-100")
             ], md=6, className="mb-4"),
 
-            # Coluna do Texto (Direita)
             dbc.Col([
                 html.H4("3. Algoritmo DBSCAN: Densidade e Isolamento de Anomalias", className="text-dark fw-bold mb-3"),
-
                 html.H6("Descrição dos Grupos", className="text-info fw-bold mb-2"),
                 html.Ul([
                     html.Li([html.Strong("Zona Adjacente 0 (Verde) — A 'Realidade Urbana Densa':"), " Maior grupo do estudo (0 a 15k chamados). Mostra que, para a imensa maioria da cidade, as variações de ineficiência (8% a 35%) fazem parte de uma mesma 'massa' contínua."]),
@@ -158,6 +173,30 @@ def render_cluster(df_geral=None):
                     style={"fontSize": "14px", "fontStyle": "italic"}
                 )
             ], md=6, className="mb-4 d-flex flex-column justify-content-center")
+        ], className="align-items-stretch mb-4"),
+
+        # ================= QUARTA LINHA: HDBSCAN =================
+        dbc.Row([
+            dbc.Col([
+                dbc.Card(dbc.CardBody(dcc.Graph(figure=fig_hdbscan)), className="shadow-sm border-0 h-100")
+            ], md=6, className="mb-4"),
+
+            dbc.Col([
+                html.H4("4. Algoritmo HDBSCAN: Densidade Hierárquica Automática", className="text-dark fw-bold mb-3"),
+                
+                html.H6("Descrição dos Grupos", className="text-warning fw-bold mb-2"),
+                html.Ul([
+                    html.Li([html.Strong("Zonas de Densidade (Cores Diversas):"), " Diferente do DBSCAN que usa um raio fixo, o HDBSCAN encontra de forma inteligente micro-agrupamentos dentro da grande 'massa' urbana de baixo/médio volume."]),
+                    html.Li([html.Strong("Anomalia / Outlier (Rosa/Preto):"), " Assim como o DBSCAN, ele identifica perfeitamente que qualquer bairro extrapolando os 15k chamados desvia estatisticamente do comportamento natural da cidade."]),
+                ], className="text-muted mb-3", style={"fontSize": "14px"}),
+
+                html.H6("Análise Final", className="text-warning fw-bold mb-2"),
+                html.Div(
+                    "Diagnóstico Operacional: Como uma evolução tecnológica do modelo anterior, o HDBSCAN varre a base buscando 'ilhas' com diferentes graus de densidade de forma autônoma. Ele isola magistralmente os outliers reais da base sem interferência manual, entregando à gestão pública a visão computacional mais refinada de onde focar esforços fora do comportamento estatístico comum.",
+                    className="border-start border-4 border-warning ps-3 bg-light p-3 rounded text-muted",
+                    style={"fontSize": "14px", "fontStyle": "italic"}
+                )
+            ], md=6, className="mb-4 d-flex flex-column justify-content-center")
         ], className="align-items-stretch mb-4")
 
-], fluid=True)
+    ], fluid=True)
