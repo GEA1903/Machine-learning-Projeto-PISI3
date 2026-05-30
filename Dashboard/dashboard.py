@@ -410,5 +410,6 @@ def rodar_simulacao(n_clicks, bairro, servico, ano, mes, dia):
     except Exception as e:
         return dbc.Alert(f"A aguardar sincronização dos ficheiros .pkl. Erro: {str(e)}", color="dark")
 
+server = app.server
 if __name__ == "__main__":
-    app.run(debug=True, port=8055)
+    server.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8050)))
