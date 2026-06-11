@@ -5,6 +5,7 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans, AgglomerativeClustering, DBSCAN
 import hdbscan  # Importação da nova biblioteca
+from sklearn.mixture import BayesianGaussianMixture  # Nova importação para o GMM livre
 
 def render_cluster(df_geral=None):
     if df_geral is None:
@@ -46,6 +47,14 @@ def render_cluster(df_geral=None):
         'Anomalia (Outlier)' if label == -1 else f'Zona de Densidade {label}' 
         for label in hdbscan_labels
     ]
+
+    # 5. GMM (Modelo de Mistura Gaussiana Variacional com Alocação Livre)
+    gmm = BayesianGaussianMixture(
+        n_components=6, weight_concentration_prior_type='dirichlet_process', 
+        random_state=42, n_init=3
+    )
+    gmm_labels = gmm.fit_predict(X_scaled)
+    df_bairros['Cluster_GMM'] = 'Componente Gaussiano ' + gmm_labels.astype(str)
 
     media_vol = df_bairros['Volume_Total'].mean()
     media_inef = df_bairros['Taxa_Ineficiencia_%'].mean()
@@ -96,6 +105,18 @@ def render_cluster(df_geral=None):
     fig_hdbscan.add_vline(x=media_vol, line_dash="dash", line_color="grey", opacity=0.3)
     fig_hdbscan.add_hline(y=media_inef, line_dash="dash", line_color="grey", opacity=0.3)
     fig_hdbscan.update_traces(marker=dict(line=dict(width=1, color='DarkSlateGrey')))
+
+    # GMM
+    fig_gmm = px.scatter(
+        df_bairros, x='Volume_Total', y='Taxa_Ineficiencia_%', color='Cluster_GMM',
+        size='Volume_Total', hover_name='BAIRRO',
+        title='5. Algoritmo GMM: Fronteiras Elípticas Probabilísticas', template='plotly_white',
+        color_discrete_sequence=['#56B4E9', '#D55E00', '#009E73', '#CC79A7', '#E69F00', '#0072B2'], size_max=35,
+        labels={'Volume_Total': 'Volume de Chamados', 'Taxa_Ineficiencia_%': 'Ineficiência (%)'}
+    )
+    fig_gmm.add_vline(x=media_vol, line_dash="dash", line_color="grey", opacity=0.3)
+    fig_gmm.add_hline(y=media_inef, line_dash="dash", line_color="grey", opacity=0.3)
+    fig_gmm.update_traces(marker=dict(line=dict(width=1, color='DarkSlateGrey')))
 
 
     return dbc.Container([
@@ -168,7 +189,7 @@ def render_cluster(df_geral=None):
 
                 html.H6("Análise Final", className="text-info fw-bold mb-2"),
                 html.Div(
-                    "Diagnóstico Operacional: O DBSCAN é o algoritmo mais realista para auditoria pública porque busca densidade real sem forçar grupos artificiais. A análise revela que os bairros de altíssimo volume não são apenas um grupo diferente, são anomalias estatísticas (Outliers). O grande aprendizado é que a prefeitura não pode usar a mesma régua para a massa verde e para as anomalias azuis; estas últimas exigem forças-tarefa e contratos customizados.",
+                    "Diagnóstico Operacional: O DBSCAN é o algoritmo mais realista para auditoria pública porque busca densidade real sem forçar grupos artificiais. A análise reveals que os bairros de altíssimo volume não são apenas um grupo diferente, são anomalias estatísticas (Outliers). O grande aprendizado é que a prefeitura não pode usar a mesma régua para a massa verde e para as anomalias azuis; estas últimas exigem forças-tarefa e contratos customizados.",
                     className="border-start border-4 border-info ps-3 bg-light p-3 rounded text-muted",
                     style={"fontSize": "14px", "fontStyle": "italic"}
                 )
@@ -186,7 +207,7 @@ def render_cluster(df_geral=None):
                 
                 html.H6("Descrição dos Grupos", className="text-warning fw-bold mb-2"),
                 html.Ul([
-                    html.Li([html.Strong("Zonas de Densidade (Cores Diversas):"), " Diferente do DBSCAN que usa um raio fixo, o HDBSCAN encontra de forma inteligente micro-agrupamentos dentro da grande 'massa' urbana de baixo/médio volume."]),
+                    html.Li([html.Strong("Zonas de Densidade (Cores Diversas):"), " Diferente do DBSCAN que usa um raio fixed, o HDBSCAN encontra de forma inteligente micro-agrupamentos dentro da grande 'massa' urbana de baixo/médio volume."]),
                     html.Li([html.Strong("Anomalia / Outlier (Rosa/Preto):"), " Assim como o DBSCAN, ele identifica perfeitamente que qualquer bairro extrapolando os 15k chamados desvia estatisticamente do comportamento natural da cidade."]),
                 ], className="text-muted mb-3", style={"fontSize": "14px"}),
 
@@ -194,6 +215,30 @@ def render_cluster(df_geral=None):
                 html.Div(
                     "Diagnóstico Operacional: Como uma evolução tecnológica do modelo anterior, o HDBSCAN varre a base buscando 'ilhas' com diferentes graus de densidade de forma autônoma. Ele isola magistralmente os outliers reais da base sem interferência manual, entregando à gestão pública a visão computacional mais refinada de onde focar esforços fora do comportamento estatístico comum.",
                     className="border-start border-4 border-warning ps-3 bg-light p-3 rounded text-muted",
+                    style={"fontSize": "14px", "fontStyle": "italic"}
+                )
+            ], md=6, className="mb-4 d-flex flex-column justify-content-center")
+        ], className="align-items-stretch mb-4"),
+
+        # ================= QUINTA LINHA: GMM =====================   
+        dbc.Row([
+            dbc.Col([
+                dbc.Card(dbc.CardBody(dcc.Graph(figure=fig_gmm)), className="shadow-sm border-0 h-100")
+            ], md=6, className="mb-4"),
+
+            dbc.Col([
+                html.H4("5. Algoritmo GMM: Fronteiras Elípticas Probabilísticas", className="text-dark fw-bold mb-3"),
+                
+                html.H6("Descrição do Agrupamento Variacional", className="text-secondary fw-bold mb-2"),
+                html.Ul([
+                    html.Li([html.Strong("Alocação de Componentes Livres:"), " O modelo foi configurado sob um Processo de Dirichlet (Soft Clustering). Em vez de impor uma quantidade rígida, o algoritmo auto-avaliou o espalhamento e concentrou os bairros apenas nos componentes que faziam sentido estatístico real."]),
+                    html.Li([html.Strong("Fronteiras de Transição (Misturas):"), " Diferente dos anteriores, os clusters não assumem geometrias fixas (como círculos). Eles se adaptam em elipses, mapeando os bairros por sua probabilidade de pertencer a cada ecossistema urbano."]),
+                ], className="text-muted mb-3", style={"fontSize": "14px"}),
+
+                html.H6("Análise Final", className="text-secondary fw-bold mb-2"),
+                html.Div(
+                    "Diagnóstico Operacional: O GMM Variacional traz a visão mais refinada e madura. Como a distribuição dos chamados da EMLURB se alonga horizontalmente na base do gráfico, as elipses Gaussianas abraçam essa tendência matemática com perfeição. O Soft Clustering prova que a divisão urbana não é preto no branco; existem bairros de transição que estão saindo da estabilidade e flertando com os limites da zona de risco.",
+                    className="border-start border-4 border-secondary ps-3 bg-light p-3 rounded text-muted",
                     style={"fontSize": "14px", "fontStyle": "italic"}
                 )
             ], md=6, className="mb-4 d-flex flex-column justify-content-center")
