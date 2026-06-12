@@ -7,3 +7,4 @@ pyarrow
 dash
 dash-bootstrap-components
 gunicorn
+hdbscan
