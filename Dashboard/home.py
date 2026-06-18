@@ -80,9 +80,10 @@ def render_home(total_registros):
                             "bairros com comportamentos de demanda similares.",
                             className="card-text text-muted", style={'min-height': '80px'}
                         ),
-                        dbc.Button("Ver Clusters", href="/cluster", color="info", className="w-100 rounded-pill mt-3")
+                        dbc.Button("Ver Clusters", href="/cluster", color="info", outline=True, className="w-100 rounded-pill mt-3 fw-bold"),
+                        dbc.Button("Simulador de IA", href="/simulador", color="info", outline=True, className="w-100 rounded-pill mt-3 fw-bold")
                     ])
-                ], className="h-100 shadow border-0 hover-shadow")
+                ], className="h-100 shadow-sm border-0 hover-shadow")
             ], width=12, md=4, className="mb-4"),
         ], className="mt-2"),
 
