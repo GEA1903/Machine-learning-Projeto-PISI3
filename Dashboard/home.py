@@ -6,9 +6,9 @@ def render_home(total_registros):
         # Cabeçalho de Boas-vindas
         dbc.Row([
             dbc.Col([
-                html.H1("Bem-vindo ao REPORT!", className="display-4 text-primary fw-bold mb-3"),
+                html.H1("Bem-vindo ao REPORT!", className="display-4 text-primary fw-bold mb-3 mt-4"),
                 html.P(f"Sistema de Inteligência Urbana processando {total_registros} registros operacionais da EMLURB.", 
-                       className="lead text-secondary mb-5"),
+                       className="lead text-secondary mb-4"),
             ], width=12, className="text-center")
         ]),
 
