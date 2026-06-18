@@ -12,7 +12,7 @@ def render_home(total_registros):
             ], width=12, className="text-center")
         ]),
 
-# NOVA SEÇÃO: STORYTELLING E UI/UX
+        # NOVA SEÇÃO: STORYTELLING E UI/UX
         dbc.Row([
             dbc.Col([
                 dbc.Card([
@@ -44,7 +44,7 @@ def render_home(total_registros):
                         html.P(
                             "Explore o ciclo de vida dos problemas em Recife através dos '3 Atos'. "
                             "Identifique sazonalidade, bairros críticos e taxas de ineficiência.",
-                            className="card-text text-muted", style={'min-height': '80px'}
+                            className="card-text text-muted text-center", style={'min-height': '80px'}
                         ),
                         dbc.Button("Acessar Gráficos", href="/eda", color="primary", outline=True, className="w-100 rounded-pill mt-3 fw-bold"),
                         dbc.Button("Ver Correlações", href="/correlacao", color="primary", outline=True, className="w-100 rounded-pill mt-3 fw-bold")
@@ -52,7 +52,7 @@ def render_home(total_registros):
                 ], className="h-100 shadow-sm border-0 hover-shadow")
             ], width=12, md=4, className="mb-4"),
 
-            # Card 2: ML (Random Forest)
+            # Card 2: ML
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
@@ -61,7 +61,7 @@ def render_home(total_registros):
                         html.P(
                             "Visualize a performance dos modelos de Random Forest. Previsão de gargalos "
                             "operacionais e estimativa de prazos de resolução com precisão matemática.",
-                            className="card-text text-muted", style={'min-height': '80px'}
+                            className="card-text text-muted text-center", style={'min-height': '80px'}
                         ),
                         dbc.Button("Machine Learning 1", href="/ml1", color="success", outline=True, className="w-100 rounded-pill mt-3 fw-bold"),
                         dbc.Button("Machine Learning 2", href="/ml2", color="success", outline=True, className="w-100 rounded-pill mt-3 fw-bold")
@@ -78,7 +78,7 @@ def render_home(total_registros):
                         html.P(
                             "Entenda a divisão de Recife por perfis de crise. O algoritmo K-Means agrupa "
                             "bairros com comportamentos de demanda similares.",
-                            className="card-text text-muted", style={'min-height': '80px'}
+                            className="card-text text-muted text-center", style={'min-height': '80px'}
                         ),
                         dbc.Button("Ver Clusters", href="/cluster", color="info", outline=True, className="w-100 rounded-pill mt-3 fw-bold"),
                         dbc.Button("Simulador de IA", href="/simulador", color="info", outline=True, className="w-100 rounded-pill mt-3 fw-bold")
@@ -91,9 +91,9 @@ def render_home(total_registros):
         dbc.Row([
             dbc.Col([
                 dbc.Alert(
-                    "Dica: Utilize o filtro de anos na página EDA para analisar períodos específicos de gestão.",
-                    color="light", className="text-center small text-muted mt-4 border-0"
+                    [html.I(className="fa-solid fa-lightbulb text-warning me-2"), "Dica: Utilize o filtro de anos na página EDA para analisar períodos específicos de gestão."],
+                    color="light", className="text-center small text-muted mt-4 border-0 shadow-sm rounded-pill"
                 )
             ], width=12)
         ])
-    ], fluid=True, className="py-5")
+    ], fluid=True, className="py-4 px-4")
