@@ -13,6 +13,32 @@ OKABE_ITO = ['#0072B2', '#D55E00', '#009E73', '#E69F00', '#56B4E9', '#CC79A7', '
 # Mapeamento de Dia_Semana_Num → nome do dia (para quando o parquet não tem Dia_Semana textual)
 _DIAS_NUM = {0: 'Monday', 1: 'Tuesday', 2: 'Wednesday', 3: 'Thursday', 4: 'Friday', 5: 'Saturday', 6: 'Sunday'}
 
+
+def info_button(graph_key):
+    return dbc.Button(
+        "i",
+        id={'type': 'open-eda-info', 'index': graph_key},
+        color="secondary",
+        size="sm",
+        outline=True,
+        className="ms-2",
+        style={"minWidth": "38px", "padding": "0.5rem 0.7rem"}
+    )
+
+
+def header_card(title, graph_key):
+    return dbc.CardHeader(
+        html.Div(
+            [
+                html.Span(title, className="fw-bold"),
+                info_button(graph_key)
+            ],
+            className="d-flex justify-content-between align-items-center"
+        ),
+        className="bg-white border-0 py-3"
+    )
+
+
 def render_eda(anos_reais, df_all=None):
     # ─── PROTEÇÃO 1: Verifica se o DataFrame foi fornecido ───
     if df_all is None or (isinstance(df_all, pd.DataFrame) and df_all.empty):
@@ -385,9 +411,9 @@ def render_eda(anos_reais, df_all=None):
 
         # --- OS 3 ATOS ---
         dbc.Row([
-            dbc.Col(dbc.Card([dbc.CardBody(dcc.Graph(id='ato-1'))], className="mb-4 shadow border-0"), width=12),
-            dbc.Col(dbc.Card([dbc.CardBody(dcc.Graph(id='ato-2'))], className="mb-4 shadow border-0"), width=12),
-            dbc.Col(dbc.Card([dbc.CardBody(dcc.Graph(id='ato-3'))], className="mb-4 shadow border-0"), width=12),
+            dbc.Col(dbc.Card([header_card('Ato 1: Volume Temporal', 'ato-1'), dbc.CardBody(dcc.Graph(id='ato-1'))], className="mb-4 shadow border-0"), width=12),
+            dbc.Col(dbc.Card([header_card('Ato 2: Gargalos por Bairro', 'ato-2'), dbc.CardBody(dcc.Graph(id='ato-2'))], className="mb-4 shadow border-0"), width=12),
+            dbc.Col(dbc.Card([header_card('Ato 3: Taxa de Ineficiência', 'ato-3'), dbc.CardBody(dcc.Graph(id='ato-3'))], className="mb-4 shadow border-0"), width=12),
         ]),
 
         html.Hr(className="my-5"),
@@ -397,57 +423,87 @@ def render_eda(anos_reais, df_all=None):
 
         # Linha 1: Evolução do volume
         dbc.Row([
-            dbc.Col(dbc.Card([dbc.CardBody(dcc.Graph(figure=fig1))], className="mb-4 shadow border-0"), width=12),
+            dbc.Col(dbc.Card([header_card('Evolução do Volume Total de Denúncias', 'fig1'), dbc.CardBody(dcc.Graph(figure=fig1))], className="mb-4 shadow border-0"), width=12),
         ]),
 
-        # Linha 2: Sazonalidade + Heatmap Dias da Semana
+        # Linha 2: Sazonalidade das Categorias (Top 5 Serviços por Mês)
         dbc.Row([
-            dbc.Col(dbc.Card([dbc.CardBody(dcc.Graph(figure=fig2))], className="mb-4 shadow border-0"), width=12, md=6),
-            dbc.Col(dbc.Card([dbc.CardBody(dcc.Graph(figure=fig3))], className="mb-4 shadow border-0"), width=12, md=6),
-        ]),
-
-        # Linha 3: Top 10 Bairros + Top 20 Treemap
+            dbc.Col(dbc.Card([
+            header_card('Sazonalidade das Categorias (Top 5 Serviços)', 'fig2'), 
+            dbc.CardBody(dcc.Graph(figure=fig2))
+        ], className="mb-4 shadow border-0"), width=12), 
+        ]),   
+        
+        # Linha 3: Heatmap Dias da Semana vs Meses do Ano     
         dbc.Row([
-            dbc.Col(dbc.Card([dbc.CardBody(dcc.Graph(figure=fig4))], className="mb-4 shadow border-0"), width=12, md=6),
-            dbc.Col(dbc.Card([dbc.CardBody(dcc.Graph(figure=fig5))], className="mb-4 shadow border-0"), width=12, md=6),
+            dbc.Col(dbc.Card([
+            header_card('Heatmap: Dias da Semana vs Meses', 'fig3'), 
+            dbc.CardBody(dcc.Graph(figure=fig3))
+        ], className="mb-4 shadow border-0"), width=12), 
         ]),
 
-        # Linha 4: Proporção de Resoluções nos Bairros Críticos
+        # Linha 4: Top 10 Bairros + Top 20 Treemap
         dbc.Row([
-            dbc.Col(dbc.Card([dbc.CardBody(dcc.Graph(figure=fig6))], className="mb-4 shadow border-0"), width=12),
+            dbc.Col(dbc.Card([header_card('Ranking de Volume: Top 10 Bairros', 'fig4'), dbc.CardBody(dcc.Graph(figure=fig4))], className="mb-4 shadow border-0"), width=12, md=6),
+            dbc.Col(dbc.Card([header_card('Top 20 Bairros em Treemap', 'fig5'), dbc.CardBody(dcc.Graph(figure=fig5))], className="mb-4 shadow border-0"), width=12, md=6),
         ]),
 
-        # Linha 5: Top 10 Vias + Rosca de Eficiência
+        # Linha 5: Proporção de Resoluções nos Bairros Críticos
+        dbc.Row([
+            dbc.Col(dbc.Card([header_card('Proporção de Resoluções nos 5 Bairros Críticos', 'fig6'), dbc.CardBody(dcc.Graph(figure=fig6))], className="mb-4 shadow border-0"), width=12),
+        ]),
+
+        # Linha 6: Top 10 Vias + Rosca de Eficiência
         dbc.Row([
             *(
-                [dbc.Col(dbc.Card([dbc.CardBody(dcc.Graph(figure=fig_vias))], className="mb-4 shadow border-0"), width=12, md=7)]
+                [dbc.Col(dbc.Card([header_card('Top 10 Vias Mais Críticas', 'fig_vias'), dbc.CardBody(dcc.Graph(figure=fig_vias))], className="mb-4 shadow border-0"), width=12, md=7)]
                 if fig_vias is not None else []
             ),
             dbc.Col(
-                dbc.Card([dbc.CardBody(dcc.Graph(figure=fig8))], className="mb-4 shadow border-0"),
+                dbc.Card([header_card('Balanço de Eficiência Pública', 'fig8'), dbc.CardBody(dcc.Graph(figure=fig8))], className="mb-4 shadow border-0"),
                 width=12, md=5 if fig_vias is not None else 12
             ),
         ]),
 
-        # Linha 6: Detalhamento do Maior Grupo
+        # Linha 7: Detalhamento do Maior Grupo
         *(
             [dbc.Row([
-                dbc.Col(dbc.Card([dbc.CardBody(dcc.Graph(figure=fig9))], className="mb-4 shadow border-0"), width=12),
+                dbc.Col(dbc.Card([header_card('Detalhamento Crítico do Maior Grupo', 'fig9'), dbc.CardBody(dcc.Graph(figure=fig9))], className="mb-4 shadow border-0"), width=12),
             ])]
             if fig9 is not None else []
         ),
 
-        # Linha 7: Heatmap Bairros vs Categorias
+        # Linha 8: Heatmap Bairros vs Categorias
         dbc.Row([
-            dbc.Col(dbc.Card([dbc.CardBody(dcc.Graph(figure=fig10))], className="mb-4 shadow border-0"), width=12),
+            dbc.Col(dbc.Card([header_card('Identidade Urbana: Bairros vs Categorias', 'fig10'), dbc.CardBody(dcc.Graph(figure=fig10))], className="mb-4 shadow border-0"), width=12),
         ]),
 
-        # Linha 8: Tempo Médio de Resolução
+        # Linha 9: Tempo Médio de Resolução
         *(
             [dbc.Row([
-                dbc.Col(dbc.Card([dbc.CardBody(dcc.Graph(figure=fig_tempo))], className="mb-4 shadow border-0"), width=12),
+                dbc.Col(dbc.Card([header_card('Tempo Médio de Resolução da Prefeitura', 'fig_tempo'), dbc.CardBody(dcc.Graph(figure=fig_tempo))], className="mb-4 shadow border-0"), width=12),
             ])]
             if fig_tempo is not None else []
         ),
+
+        dbc.Offcanvas(
+            id='offcanvas-info',
+            title='Ajuda do Gráfico',
+            is_open=False,
+            children=html.Div([
+                html.Div(
+                    [
+                        html.P("Selecione um gráfico para ver a explicação detalhada.", className="small text-muted"),
+                        html.P("Aqui serão exibidas as informações específicas de cada gráfico.", className="small text-muted")
+                    ],
+                    id='offcanvas-info-body'
+                ),
+                dbc.Button("Fechar", id='close-offcanvas', color='secondary', size='sm', className='mt-3')
+            ]),
+            backdrop=True,
+            placement='end',
+            scrollable=True,
+            className='shadow-lg'
+        )
 
     ], fluid=True)
