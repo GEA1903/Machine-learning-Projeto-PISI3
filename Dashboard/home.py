@@ -18,7 +18,13 @@ def render_home(total_registros):
                 dbc.Card([
                     dbc.CardBody([
                         html.H3([html.I(className="fa-solid fa-book-open me-2"), "Storytelling Analítico"], className="text-white fw-bold mb-3"),
-                        html.P("A zeladoria urbana enfrenta desafios logísticos complexos. Este painel transforma dados brutos em inteligência governamental.", className="text-light fs-5")
+                        html.P("A zeladoria urbana enfrenta desafios logísticos complexos. Este painel transforma dados brutos em inteligência governamental.", className="text-light fs-5"),
+                        html.Hr(className="border-light opacity-50 my-4"),
+                        dbc.Row([
+                            dbc.Col([html.Div([html.I(className="fa-solid fa-magnifying-glass-chart fa-2x text-warning mb-2"), html.H5("1. O Problema", className="text-white fw-bold"), html.P("Mapeamento de gargalos.", className="text-light small")], className="text-center")], md=4),
+                            dbc.Col([html.Div([html.I(className="fa-solid fa-brain fa-2x text-warning mb-2"), html.H5("2. A Inteligência", className="text-white fw-bold"), html.P("Modelos preditivos.", className="text-light small")], className="text-center")], md=4),
+                            dbc.Col([html.Div([html.I(className="fa-solid fa-map-location-dot fa-2x text-warning mb-2"), html.H5("3. A Solução", className="text-white fw-bold"), html.P("Clusterização geográfica.", className="text-light small")], className="text-center")], md=4),
+                        ])
                     ], className="p-4")
                 ], className="shadow-lg border-0 mb-5", style={"background": "linear-gradient(135deg, #1E40AF, #7B1FA2)", "borderRadius": "20px"})
             ], width=12)
