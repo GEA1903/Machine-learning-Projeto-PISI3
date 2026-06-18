@@ -16,9 +16,9 @@ _DIAS_NUM = {0: 'Monday', 1: 'Tuesday', 2: 'Wednesday', 3: 'Thursday', 4: 'Frida
 
 def info_button(graph_key):
     return dbc.Button(
-        "i",
+        "Storytelling",
         id={'type': 'open-eda-info', 'index': graph_key},
-        color="secondary",
+        color="primary",
         size="sm",
         outline=True,
         className="ms-2",
@@ -433,7 +433,7 @@ def render_eda(anos_reais, df_all=None):
             dbc.CardBody(dcc.Graph(figure=fig2))
         ], className="mb-4 shadow border-0"), width=12), 
         ]),   
-        
+
         # Linha 3: Heatmap Dias da Semana vs Meses do Ano     
         dbc.Row([
             dbc.Col(dbc.Card([
