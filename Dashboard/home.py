@@ -64,7 +64,8 @@ def render_home(total_registros):
                             className="card-text text-muted text-center", style={'min-height': '80px'}
                         ),
                         dbc.Button("Machine Learning 1", href="/ml1", color="success", outline=True, className="w-100 rounded-pill mt-3 fw-bold"),
-                        dbc.Button("Machine Learning 2", href="/ml2", color="success", outline=True, className="w-100 rounded-pill mt-3 fw-bold")
+                        dbc.Button("Machine Learning 2", href="/ml2", color="success", outline=True, className="w-100 rounded-pill mt-3 fw-bold"),
+                        dbc.Button("Simulador de IA", href="/simulador", color="success", outline=True, className="w-100 rounded-pill mt-3 fw-bold")
                     ])
                 ], className="h-100 shadow-sm border-0 hover-shadow")
             ], width=12, md=4, className="mb-4"),
@@ -81,7 +82,7 @@ def render_home(total_registros):
                             className="card-text text-muted text-center", style={'min-height': '80px'}
                         ),
                         dbc.Button("Ver Clusters", href="/cluster", color="info", outline=True, className="w-100 rounded-pill mt-3 fw-bold"),
-                        dbc.Button("Simulador de IA", href="/simulador", color="info", outline=True, className="w-100 rounded-pill mt-3 fw-bold")
+                        
                     ])
                 ], className="h-100 shadow-sm border-0 hover-shadow")
             ], width=12, md=4, className="mb-4"),
