@@ -12,6 +12,18 @@ def render_home(total_registros):
             ], width=12, className="text-center")
         ]),
 
+# NOVA SEÇÃO: STORYTELLING E UI/UX
+        dbc.Row([
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardBody([
+                        html.H3([html.I(className="fa-solid fa-book-open me-2"), "Storytelling Analítico"], className="text-white fw-bold mb-3"),
+                        html.P("A zeladoria urbana enfrenta desafios logísticos complexos. Este painel transforma dados brutos em inteligência governamental.", className="text-light fs-5")
+                    ], className="p-4")
+                ], className="shadow-lg border-0 mb-5", style={"background": "linear-gradient(135deg, #1E40AF, #7B1FA2)", "borderRadius": "20px"})
+            ], width=12)
+        ]),
+
         # Linha dos 3 Quadros Flutuantes
         dbc.Row([
             # Card 1: EDA
